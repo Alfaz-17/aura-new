@@ -55,23 +55,6 @@ export function HeroSection() {
           transition={{ duration: 1.2, delay: 0.3 }}
           className="text-center w-full max-w-3xl mx-auto"
         >
-          {/* Logo */}
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="mb-10 md:mb-12"
-          >
-            <Image
-              src="/logo.png"
-              alt="Aura – House of Flowers"
-              width={300}
-              height={100}
-              className="h-20 md:h-24 lg:h-28 w-auto mx-auto"
-              priority
-            />
-          </motion.div>
-
           {/* Headline */}
           <motion.h1 
             initial={{ opacity: 0, y: 25 }}
