@@ -19,7 +19,7 @@ const categories = [
 
 export function CategoryTabs({ activeCategory, onCategoryChange }: CategoryTabsProps) {
   return (
-    <section className="sticky top-20 lg:top-24 z-30 bg-[#F7F7F5]/95 backdrop-blur-md border-b border-[#0E2A47]/10">
+    <section className="sticky top-16 lg:top-20 z-30 bg-[#F7F7F5] border-b border-[#0E2A47]/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-start lg:justify-center gap-1 sm:gap-2 py-4 overflow-x-auto scrollbar-hide">
           {categories.map((category) => {
