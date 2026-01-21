@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
@@ -62,7 +62,7 @@ const staticProducts = [
   },
 ]
 
-export default function ShopPage() {
+function ShopContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const categoryParam = searchParams.get("category")
@@ -88,9 +88,7 @@ export default function ShopPage() {
     : staticProducts.filter((p) => p.category === activeCategory)
 
   return (
-    <main className="min-h-screen bg-[#F7F7F5]">
-      <Navigation />
-
+    <>
       {/* Hero Banner */}
       <section className="relative h-[45vh] min-h-[350px] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
@@ -219,8 +217,27 @@ export default function ShopPage() {
           </a>
         </div>
       </section>
+    </>
+  )
+}
 
+function ShopLoading() {
+  return (
+    <div className="flex items-center justify-center min-h-[50vh]">
+      <div className="animate-pulse text-[#0E2A47]/50">Loading...</div>
+    </div>
+  )
+}
+
+export default function ShopPage() {
+  return (
+    <main className="min-h-screen bg-[#F7F7F5]">
+      <Navigation />
+      <Suspense fallback={<ShopLoading />}>
+        <ShopContent />
+      </Suspense>
       <PremiumFooter />
     </main>
   )
 }
+
