@@ -41,11 +41,7 @@ export function Navigation() {
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-          isScrolled 
-            ? "bg-[#0E2A47]/95 backdrop-blur-xl border-b border-[#C9A24D]/20" 
-            : "bg-transparent"
-        }`}
+        className="fixed top-0 left-0 right-0 z-50 bg-[#0E2A47] border-b border-[#C9A24D]/20"
       >
         <nav className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="flex h-16 lg:h-20 items-center justify-between">
