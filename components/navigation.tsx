@@ -178,21 +178,21 @@ export function Navigation() {
               className="fixed inset-y-0 left-0 w-[85%] max-w-sm z-50 bg-[#0E2A47] border-r border-[#C9A24D]/20 shadow-2xl flex flex-col"
             >
               <div className="flex items-center justify-between h-20 px-6 border-b border-white/10">
-                <Image src="/logo.png" alt="Aura" width={100} height={40} className="h-8 w-auto" />
+                <Image src="/logo.png" alt="Aura" width={160} height={60} className="h-25 w-auto" />
                 <button onClick={() => setIsMenuOpen(false)} className="p-2 text-white">
                   <X className="h-6 w-6" />
                 </button>
               </div>
               
               <nav className="flex-1 overflow-y-auto px-6 py-8 flex flex-col gap-6">
-                <Link href="/" className="text-xl tracking-wide uppercase text-white hover:text-[#C9A24D] transition-colors">Home</Link>
-                <Link href="/#about" className="text-xl tracking-wide uppercase text-white hover:text-[#C9A24D] transition-colors">About Us</Link>
+                <Link href="/" onClick={() => setIsMenuOpen(false)} className="text-xl tracking-wide uppercase text-white hover:text-[#C9A24D] transition-colors">Home</Link>
+                <Link href="/#about" onClick={() => setIsMenuOpen(false)} className="text-xl tracking-wide uppercase text-white hover:text-[#C9A24D] transition-colors">About Us</Link>
                 
                 <div className="flex flex-col gap-3">
                   <p className="text-[10px] tracking-[0.3em] uppercase text-[#C9A24D] font-medium border-b border-[#C9A24D]/20 pb-2">
                     Collection
                   </p>
-                  <Link href="/shop" className="text-lg tracking-wide uppercase text-white/80 pl-2 flex items-center gap-3 hover:text-[#C9A24D]">
+                  <Link href="/shop" onClick={() => setIsMenuOpen(false)} className="text-lg tracking-wide uppercase text-white/80 pl-2 flex items-center gap-3 hover:text-[#C9A24D]">
                     <Sparkles className="h-4 w-4 text-[#C9A24D]" />
                     All Products
                   </Link>
@@ -200,6 +200,7 @@ export function Navigation() {
                     <Link
                       key={cat.value}
                       href={`/shop?category=${cat.value}`}
+                      onClick={() => setIsMenuOpen(false)}
                       className="text-base tracking-wide uppercase text-white/60 pl-2 flex items-center gap-3 hover:text-white"
                     >
                       <cat.icon className="h-4 w-4 text-white/40" strokeWidth={1.5} />
@@ -208,7 +209,7 @@ export function Navigation() {
                   ))}
                 </div>
 
-                <Link href="/#contact" className="text-xl tracking-wide uppercase text-white hover:text-[#C9A24D] transition-colors">Contact</Link>
+                <Link href="/#contact" onClick={() => setIsMenuOpen(false)} className="text-xl tracking-wide uppercase text-white hover:text-[#C9A24D] transition-colors">Contact</Link>
                 
                 <hr className="border-white/10 mt-4" />
                 
