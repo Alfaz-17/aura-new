@@ -1,6 +1,6 @@
 "use client"
 
-import { use } from "react"
+import { useState, useEffect, use } from "react"
 import { notFound } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
@@ -8,86 +8,46 @@ import { motion } from "framer-motion"
 import { Navigation } from "@/components/navigation"
 import { PremiumFooter } from "@/components/premium-footer"
 import { ChevronRight, MessageCircle, ArrowLeft } from "lucide-react"
-
-// Static products (matching shop page)
-const staticProducts = [
-  {
-    id: "elegant-orchid",
-    name: "Elegant Orchid Arrangement",
-    price: 4500,
-    category: "artificial-flowers",
-    image: "/luxury-artificial-orchid-arrangement.jpg",
-    description: "Premium silk orchid blooms that bring timeless elegance to any space.",
-    longDescription: "This exquisite orchid arrangement features hand-selected premium silk blooms, meticulously arranged to capture the natural beauty and grace of real Phalaenopsis orchids. Each petal is crafted with attention to detail, creating lifelike textures and gentle color gradients. Perfect for offices, living rooms, or as a stunning centerpiece.",
-    materials: ["Premium silk orchid blooms", "Natural-touch leaves", "Handcrafted ceramic pot", "Preserved moss base"],
-    dimensions: "Height: 60cm | Width: 35cm",
-  },
-  {
-    id: "botanical-stone",
-    name: "Botanical Stone Accent",
-    price: 3200,
-    category: "artificial-flowers",
-    image: "/minimal-botanical-arrangement-on-stone.jpg",
-    description: "Minimalist botanical arrangement on natural stone.",
-    longDescription: "A harmonious blend of natural stone and carefully placed botanicals, this accent piece embodies modern minimalism. The weighted stone base provides stability while creating a striking visual anchor for any tabletop or shelf.",
-    materials: ["Natural stone base", "Faux botanicals", "UV-resistant coating"],
-    dimensions: "Height: 25cm | Base: 15cm",
-  },
-  {
-    id: "floral-wall",
-    name: "Grand Floral Wall Installation",
-    price: 25000,
-    category: "hanging-greenery",
-    image: "/large-artificial-floral-installation-wall.jpg",
-    description: "Large-scale floral installation for dramatic impact.",
-    longDescription: "Transform any space with this breathtaking wall installation. Featuring a cascading arrangement of premium artificial flowers and greenery, this piece creates an unforgettable focal point for weddings, events, or permanent installations in luxury spaces.",
-    materials: ["Premium silk flowers", "Wire frame structure", "Mounting hardware included", "Customizable color palette"],
-    dimensions: "Custom sizing available",
-  },
-  {
-    id: "luxury-greenery",
-    name: "Luxury Interior Greenery",
-    price: 8500,
-    category: "artificial-green-plants",
-    image: "/luxury-interior-with-artificial-floral-installatio.jpg",
-    description: "Transform your interior with lush greenery.",
-    longDescription: "Bring the outdoors in with this sophisticated greenery arrangement. Designed for luxury interiors, this piece features a variety of premium faux plants that require zero maintenance while providing year-round freshness and vitality.",
-    materials: ["Premium faux plants", "Decorative planter", "Natural-looking soil cover"],
-    dimensions: "Height: 120cm | Planter: 40cm",
-  },
-  {
-    id: "ceramic-pot",
-    name: "Ceramic Gradient Pot",
-    price: 1800,
-    category: "decor-accessories",
-    image: "/ceramic-gradient-pot-minimal.jpg",
-    description: "Handcrafted ceramic pot with subtle gradient finish.",
-    longDescription: "Each pot is hand-thrown and finished with our signature gradient glaze technique. The organic shape and subtle color transitions make it perfect as a standalone piece or paired with our botanical arrangements.",
-    materials: ["Hand-thrown ceramic", "Gradient glaze finish", "Drainage hole with plug"],
-    dimensions: "Height: 22cm | Diameter: 18cm",
-  },
-  {
-    id: "console-table",
-    name: "Handcrafted Console Table",
-    price: 18500,
-    category: "decor-accessories",
-    image: "/minimal-handcrafted-console-table.jpg",
-    description: "Artisan-made console table perfect for floral displays.",
-    longDescription: "This minimalist console table is handcrafted by local artisans using sustainable materials. Its clean lines and natural finish provide the perfect backdrop for showcasing our botanical arrangements.",
-    materials: ["Solid mango wood", "Hand-finished natural stain", "Steel accents"],
-    dimensions: "Length: 120cm | Height: 80cm | Depth: 35cm",
-  },
-]
-
-function getProductById(id: string) {
-  return staticProducts.find((p) => p.id === id)
-}
+import { ProductDetailSkeleton } from "@/components/ui/loading-skeleton"
 
 export default function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const product = getProductById(id)
+  const [product, setProduct] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(false)
 
-  if (!product) {
+  useEffect(() => {
+    const fetchProduct = async () => {
+      setIsLoading(true)
+      try {
+        const res = await fetch(`/api/items/${id}`)
+        if (res.ok) {
+          const data = await res.json()
+          setProduct(data)
+        } else {
+          setError(true)
+        }
+      } catch (err) {
+        setError(true)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchProduct()
+  }, [id])
+
+  if (isLoading) {
+    return (
+      <main className="min-h-screen bg-[#F7F7F5]">
+        <Navigation />
+        <ProductDetailSkeleton />
+        <PremiumFooter />
+      </main>
+    )
+  }
+
+  if (error || !product) {
     notFound()
   }
 
@@ -106,7 +66,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
             Shop
           </Link>
           <ChevronRight className="w-3 h-3" />
-          <span className="text-[#0E2A47]">{product.name}</span>
+          <span className="text-[#0E2A47]">{product.title}</span>
         </nav>
       </div>
 
@@ -122,8 +82,8 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
           >
             <div className="aspect-[4/5] relative overflow-hidden bg-white">
               <Image
-                src={product.image}
-                alt={product.name}
+                src={product.images?.[0] || "/placeholder-image.jpg"}
+                alt={product.title}
                 fill
                 sizes="(max-width: 1024px) 100vw, 50vw"
                 className="object-cover"
@@ -149,46 +109,46 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
           >
             {/* Category */}
             <p className="text-[10px] tracking-[0.3em] text-[#C9A24D] uppercase mb-4">
-              {product.category.replace(/-/g, " ")}
+              {product.category?.replace(/-/g, " ")}
             </p>
 
             {/* Title */}
             <h1 className="font-serif text-3xl md:text-4xl lg:text-5xl text-[#0E2A47] mb-4">
-              {product.name}
+              {product.title}
             </h1>
 
             {/* Price */}
             <p className="text-2xl text-[#0E2A47] mb-6">
-              ₹{product.price.toLocaleString()}
+              ₹{product.price?.toLocaleString()}
             </p>
 
             {/* Description */}
             <p className="text-[#0E2A47]/70 leading-relaxed mb-8 font-light">
-              {product.longDescription}
+              {product.description}
             </p>
 
             {/* Details */}
-            <div className="border-t border-[#0E2A47]/10 pt-6 mb-8">
-              <h3 className="text-xs tracking-[0.2em] uppercase text-[#0E2A47] mb-4">Materials</h3>
-              <ul className="space-y-2">
-                {product.materials.map((material, i) => (
-                  <li key={i} className="text-[#0E2A47]/60 text-sm flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 bg-[#C9A24D]" />
-                    {material}
-                  </li>
-                ))}
-              </ul>
-            </div>
+            {product.material && (
+              <div className="border-t border-[#0E2A47]/10 pt-6 mb-8">
+                <h3 className="text-xs tracking-[0.2em] uppercase text-[#0E2A47] mb-4">Material</h3>
+                <p className="text-[#0E2A47]/60 text-sm flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 bg-[#C9A24D]" />
+                  {product.material}
+                </p>
+              </div>
+            )}
 
             {/* Dimensions */}
-            <div className="border-t border-[#0E2A47]/10 pt-6 mb-10">
-              <h3 className="text-xs tracking-[0.2em] uppercase text-[#0E2A47] mb-2">Dimensions</h3>
-              <p className="text-[#0E2A47]/60 text-sm">{product.dimensions}</p>
-            </div>
+            {product.dimensions && (
+              <div className="border-t border-[#0E2A47]/10 pt-6 mb-10">
+                <h3 className="text-xs tracking-[0.2em] uppercase text-[#0E2A47] mb-2">Dimensions</h3>
+                <p className="text-[#0E2A47]/60 text-sm">{product.dimensions}</p>
+              </div>
+            )}
 
             {/* CTA */}
             <a
-              href={`https://wa.me/919737828614?text=Hi! I'm interested in the ${product.name} (₹${product.price.toLocaleString()})`}
+              href={`https://wa.me/919737828614?text=Hi! I'm interested in the ${product.title} (₹${product.price?.toLocaleString()})`}
               target="_blank"
               rel="noopener noreferrer"
               className="block"

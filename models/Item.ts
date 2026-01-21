@@ -73,5 +73,6 @@ ItemSchema.pre("save", function (next) {
   next()
 })
 
+// Explicitly set collection name
 export const Item: Model<IItem> =
-  mongoose.models.Item || mongoose.model<IItem>("Item", ItemSchema)
+  mongoose.models.Item || mongoose.model<IItem>("Item", ItemSchema, "items")

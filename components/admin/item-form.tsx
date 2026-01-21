@@ -34,6 +34,7 @@ export function ItemForm({ initialData }: ItemFormProps) {
   })
   const [imageUrl, setImageUrl] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState("")
 
   const handleAddImage = () => {
@@ -164,43 +165,115 @@ export function ItemForm({ initialData }: ItemFormProps) {
         </div>
 
         {/* Images */}
-        <div>
-          <label className="text-[#0E2A47]/70 text-[10px] tracking-[0.2em] uppercase block mb-2">
-            Images
-          </label>
-          <div className="flex gap-2 mb-3">
-            <input
-              type="text"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              placeholder="/image-path.jpg or https://..."
-              className="flex-1 border border-[#0E2A47]/10 px-4 py-3 text-[#0E2A47] focus:outline-none focus:border-[#C9A24D]/50"
-            />
-            <button
-              type="button"
-              onClick={handleAddImage}
-              className="px-4 py-3 bg-[#0E2A47] text-white hover:bg-[#1a3d5c] transition-colors"
-            >
-              <Upload className="h-4 w-4" />
-            </button>
-          </div>
-          {formData.images.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {formData.images.map((img, idx) => (
-                <div key={idx} className="relative group">
-                  <img src={img} alt="" className="w-20 h-20 object-cover bg-[#F7F7F5]" />
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveImage(idx)}
-                    className="absolute inset-0 bg-red-500/80 text-white opacity-0 group-hover:opacity-100 transition-opacity text-xs"
-                  >
-                    Remove
-                  </button>
+          <div className="space-y-4">
+            <label className="text-[#0E2A47]/70 text-[10px] tracking-[0.2em] uppercase block">
+              Images
+            </label>
+            
+            {/* Image Upload Area */}
+            <div className={`border-2 border-dashed border-[#0E2A47]/10 p-6 text-center transition-colors relative ${isUploading ? 'bg-gray-50' : 'hover:bg-[#F7F7F5]'}`}>
+              {isUploading && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 z-10">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0E2A47] mb-2"></div>
+                  <span className="text-xs font-medium text-[#0E2A47] animate-pulse">Uploading images...</span>
                 </div>
-              ))}
+              )}
+              
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={async (e) => {
+                  if (e.target.files && e.target.files.length > 0) {
+                    const files = Array.from(e.target.files)
+                    setIsUploading(true)
+                    setError("")
+                    
+                    try {
+                      const uploadPromises = files.map(async (file) => {
+                        const formData = new FormData()
+                        formData.append("file", file)
+                        
+                        const res = await fetch("/api/upload", {
+                          method: "POST",
+                          body: formData,
+                        })
+                        
+                        if (!res.ok) {
+                          const errorData = await res.json()
+                          throw new Error(errorData.error || "Upload failed")
+                        }
+                        const data = await res.json()
+                        return data.url
+                      })
+
+                      const uploadedUrls = await Promise.all(uploadPromises)
+                      setFormData(prev => ({
+                        ...prev,
+                        images: [...prev.images, ...uploadedUrls]
+                      }))
+                    } catch (err: any) {
+                      console.error("Upload error:", err)
+                      setError(err.message || "Failed to upload images. Check your connection.")
+                    } finally {
+                      setIsUploading(false)
+                      e.target.value = ""
+                    }
+                  }
+                }}
+                className="hidden"
+                id="image-upload"
+                disabled={isUploading}
+              />
+              <label htmlFor="image-upload" className={`cursor-pointer block ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                <Upload className="h-8 w-8 mx-auto text-[#0E2A47]/30 mb-2" />
+                <span className="text-sm text-[#0E2A47]/60 block mb-1">
+                  Click to upload or drag and drop
+                </span>
+                <span className="text-xs text-[#0E2A47]/40 block">
+                  SVG, PNG, JPG or GIF (max. 10MB)
+                </span>
+              </label>
             </div>
-          )}
-        </div>
+
+            {/* URL Fallback */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                placeholder="Or paste image URL..."
+                className="flex-1 border border-[#0E2A47]/10 px-4 py-2 text-sm text-[#0E2A47] focus:outline-none focus:border-[#C9A24D]/50"
+                disabled={isUploading}
+              />
+              <button
+                type="button"
+                onClick={handleAddImage}
+                className="px-4 py-2 bg-[#0E2A47]/5 text-[#0E2A47] text-xs uppercase tracking-wider hover:bg-[#0E2A47]/10 transition-colors"
+                disabled={!imageUrl || isUploading}
+              >
+                Add URL
+              </button>
+            </div>
+
+            {/* Image Preview Grid */}
+            {formData.images.length > 0 && (
+              <div className="grid grid-cols-4 sm:grid-cols-5 gap-4 mt-4">
+                {formData.images.map((img, idx) => (
+                  <div key={idx} className="relative group aspect-square bg-[#F7F7F5] overflow-hidden">
+                    <img src={img} alt="" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage(idx)}
+                      className="absolute inset-0 bg-red-500/80 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                    >
+                      <span className="text-xs font-medium uppercase tracking-wider">Remove</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
         {/* Price, Dimensions, Material */}
         <div className="grid md:grid-cols-3 gap-4">
@@ -246,7 +319,7 @@ export function ItemForm({ initialData }: ItemFormProps) {
         <div className="flex justify-end pt-4 border-t border-[#0E2A47]/10">
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || isUploading}
             className="flex items-center gap-2 bg-[#C9A24D] text-[#0E2A47] px-8 py-3 text-xs tracking-wider uppercase font-semibold hover:bg-[#d4af5a] transition-colors disabled:opacity-50"
           >
             <Save className="h-4 w-4" />

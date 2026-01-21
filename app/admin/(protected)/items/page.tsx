@@ -6,7 +6,7 @@ import { Plus, Search, Edit, Trash2 } from "lucide-react"
 import { DeleteItemButton } from "@/components/admin/delete-item-button"
 
 interface ItemsPageProps {
-  searchParams: { category?: string; search?: string }
+  searchParams: Promise<{ category?: string; search?: string }>
 }
 
 async function getItems(category?: string, search?: string) {
@@ -27,7 +27,8 @@ async function getItems(category?: string, search?: string) {
 }
 
 export default async function ItemsPage({ searchParams }: ItemsPageProps) {
-  const items = await getItems(searchParams.category, searchParams.search)
+  const { category, search } = await searchParams
+  const items = await getItems(category, search)
 
   return (
     <div className="max-w-6xl">
@@ -53,14 +54,14 @@ export default async function ItemsPage({ searchParams }: ItemsPageProps) {
             <input
               type="text"
               name="search"
-              defaultValue={searchParams.search}
+              defaultValue={search}
               placeholder="Search items..."
               className="w-full pl-10 pr-4 py-2 border border-[#0E2A47]/10 text-sm focus:outline-none focus:border-[#C9A24D]/50"
             />
           </div>
           <select
             name="category"
-            defaultValue={searchParams.category || "all"}
+            defaultValue={category || "all"}
             className="px-4 py-2 border border-[#0E2A47]/10 text-sm focus:outline-none focus:border-[#C9A24D]/50 bg-white"
           >
             <option value="all">All Categories</option>

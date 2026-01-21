@@ -7,23 +7,19 @@ import { Instagram, Facebook, Twitter } from "lucide-react"
 export function PremiumFooter() {
   const footerLinks = {
     collections: [
-      { label: "The Archive", href: "/archive" },
-      { label: "Signature Series", href: "/signature" },
-      { label: "Interior Botanicals", href: "/interior" },
-      { label: "Decorative Vessels", href: "/vessels" },
-      { label: "Wedding & Events", href: "/ceremonial" },
+      { label: "All Products", href: "/shop" },
+      { label: "Artificial Flowers", href: "/shop?category=artificial-flowers" },
+      { label: "Green Plants", href: "/shop?category=artificial-green-plants" },
+      { label: "Bonsai", href: "/shop?category=bonsai" },
+      { label: "Hanging Greenery", href: "/shop?category=hanging-greenery" },
+      { label: "Décor Accessories", href: "/shop?category=decor-accessories" },
     ],
     theHouse: [
-      { label: "Our Story", href: "/about" },
-      { label: "Gujarat Florist", href: "/ceremonial" },
-      { label: "Bespoke Artistry", href: "/artistry" },
-      { label: "Sustainability", href: "/sustainability" },
+      { label: "Our Story", href: "/#about" },
+      { label: "Heritage", href: "/heritage" },
     ],
     connect: [
-      { label: "Contact Us", href: "/contact" },
-      { label: "Book Appointment", href: "/appointment" },
-      { label: "Store Locator", href: "/location" },
-      { label: "Care Guide", href: "/care" },
+      { label: "Contact Us", href: "/#contact" },
     ],
   }
 
@@ -131,14 +127,6 @@ export function PremiumFooter() {
           </div>
 
           <div className="flex flex-col md:flex-row items-center gap-8 text-[9px] tracking-[0.3em] uppercase text-background/30">
-            <div className="flex gap-6">
-              <Link href="/privacy" className="hover:text-background/60 transition-colors">
-                Privacy
-              </Link>
-              <Link href="/terms" className="hover:text-background/60 transition-colors">
-                Terms
-              </Link>
-            </div>
             <span>© 2024 Aura – House of Flowers. Bhavnagar, Gujarat.</span>
           </div>
         </div>

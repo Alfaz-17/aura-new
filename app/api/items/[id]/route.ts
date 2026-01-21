@@ -3,15 +3,16 @@ import { connectToDatabase } from "@/lib/mongodb"
 import { Item } from "@/models/Item"
 
 interface RouteParams {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 // GET single item
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     await connectToDatabase()
+    const { id } = await params
     
-    const item = await Item.findById(params.id).lean()
+    const item = await Item.findById(id).lean()
     
     if (!item) {
       return NextResponse.json(
@@ -33,6 +34,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     await connectToDatabase()
+    const { id } = await params
     
     const body = await request.json()
     const { title, description, category, images, price, dimensions, material } = body
@@ -45,7 +47,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     }
 
     const item = await Item.findByIdAndUpdate(
-      params.id,
+      id,
       {
         title,
         description,
@@ -84,8 +86,9 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     await connectToDatabase()
+    const { id } = await params
     
-    const item = await Item.findByIdAndDelete(params.id)
+    const item = await Item.findByIdAndDelete(id)
 
     if (!item) {
       return NextResponse.json(

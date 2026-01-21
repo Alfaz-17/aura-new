@@ -9,70 +9,47 @@ import { Navigation } from "@/components/navigation"
 import { PremiumFooter } from "@/components/premium-footer"
 import { CategoryTabs } from "@/components/category-tabs"
 import { ArrowRight } from "lucide-react"
+import { ProductGridSkeleton } from "@/components/ui/loading-skeleton"
 
 // Temporary static products until we connect to database
-const staticProducts = [
-  {
-    id: "elegant-orchid",
-    name: "Elegant Orchid Arrangement",
-    price: 4500,
-    category: "artificial-flowers",
-    image: "/luxury-artificial-orchid-arrangement.jpg",
-    description: "Premium silk orchid blooms",
-  },
-  {
-    id: "botanical-stone",
-    name: "Botanical Stone Accent",
-    price: 3200,
-    category: "artificial-flowers",
-    image: "/minimal-botanical-arrangement-on-stone.jpg",
-    description: "Minimalist botanical arrangement",
-  },
-  {
-    id: "floral-wall",
-    name: "Grand Floral Wall Installation",
-    price: 25000,
-    category: "hanging-greenery",
-    image: "/large-artificial-floral-installation-wall.jpg",
-    description: "Large-scale installation",
-  },
-  {
-    id: "luxury-greenery",
-    name: "Luxury Interior Greenery",
-    price: 8500,
-    category: "artificial-green-plants",
-    image: "/luxury-interior-with-artificial-floral-installatio.jpg",
-    description: "Transform your interior",
-  },
-  {
-    id: "ceramic-pot",
-    name: "Ceramic Gradient Pot",
-    price: 1800,
-    category: "decor-accessories",
-    image: "/ceramic-gradient-pot-minimal.jpg",
-    description: "Handcrafted ceramic pot",
-  },
-  {
-    id: "console-table",
-    name: "Handcrafted Console Table",
-    price: 18500,
-    category: "decor-accessories",
-    image: "/minimal-handcrafted-console-table.jpg",
-    description: "Artisan-made console table",
-  },
-]
+const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
 function ShopContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const categoryParam = searchParams.get("category")
   const [activeCategory, setActiveCategory] = useState(categoryParam || "All")
+  const [products, setProducts] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     if (categoryParam) {
       setActiveCategory(categoryParam)
     }
   }, [categoryParam])
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setIsLoading(true)
+      try {
+        const url = activeCategory === "All" 
+          ? "/api/items"
+          : `/api/items?category=${activeCategory}`
+        
+        const res = await fetch(url)
+        if (res.ok) {
+          const data = await res.json()
+          setProducts(data)
+        }
+      } catch (error) {
+        console.error("Failed to fetch products", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchProducts()
+  }, [activeCategory])
 
   const handleCategoryChange = (category: string) => {
     setActiveCategory(category)
@@ -82,10 +59,6 @@ function ShopContent() {
       router.push(`/shop?category=${category}`)
     }
   }
-
-  const filteredProducts = activeCategory === "All" 
-    ? staticProducts 
-    : staticProducts.filter((p) => p.category === activeCategory)
 
   return (
     <>
@@ -127,74 +100,80 @@ function ShopContent() {
       <section className="py-16 md:py-20">
         <div className="max-w-7xl mx-auto px-6">
           {/* Results Count */}
-          <div className="mb-8 flex items-center justify-between">
-            <p className="text-[#0E2A47]/50 text-sm">
-              Showing <span className="text-[#0E2A47] font-medium">{filteredProducts.length}</span> products
-            </p>
-          </div>
+          {!isLoading && (
+            <div className="mb-8 flex items-center justify-between">
+              <p className="text-[#0E2A47]/50 text-sm">
+                Showing <span className="text-[#0E2A47] font-medium">{products.length}</span> products
+              </p>
+            </div>
+          )}
 
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeCategory}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.4 }}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8"
-            >
-              {filteredProducts.length > 0 ? (
-                filteredProducts.map((product, index) => (
-                  <motion.div
-                    key={product.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: index * 0.08 }}
-                  >
-                    <Link href={`/product/${product.id}`} className="group block">
-                      <div className="relative aspect-[3/4] overflow-hidden bg-white mb-4">
-                        <Image
-                          src={product.image}
-                          alt={product.name}
-                          fill
-                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                          className="object-cover transition-transform duration-700 group-hover:scale-105"
-                        />
-                        {/* Hover Overlay */}
-                        <div className="absolute inset-0 bg-[#0E2A47]/0 group-hover:bg-[#0E2A47]/20 transition-colors duration-300" />
-                        {/* Quick View */}
-                        <div className="absolute inset-x-4 bottom-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                          <div className="bg-white/95 backdrop-blur-sm px-4 py-3 text-center">
-                            <span className="text-[10px] tracking-[0.2em] uppercase text-[#0E2A47] font-medium">View Details</span>
+          {isLoading ? (
+            <ProductGridSkeleton />
+          ) : (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeCategory}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.4 }}
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8"
+              >
+                {products.length > 0 ? (
+                  products.map((product, index) => (
+                    <motion.div
+                      key={product._id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: index * 0.08 }}
+                    >
+                      <Link href={`/product/${product._id}`} className="group block">
+                        <div className="relative aspect-[3/4] overflow-hidden bg-white mb-4">
+                          <Image
+                            src={product.images?.[0] || "/placeholder-image.jpg"}
+                            alt={product.title}
+                            fill
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                            className="object-cover transition-transform duration-700 group-hover:scale-105"
+                          />
+                          {/* Hover Overlay */}
+                          <div className="absolute inset-0 bg-[#0E2A47]/0 group-hover:bg-[#0E2A47]/20 transition-colors duration-300" />
+                          {/* Quick View */}
+                          <div className="absolute inset-x-4 bottom-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <div className="bg-white/95 backdrop-blur-sm px-4 py-3 text-center">
+                              <span className="text-[10px] tracking-[0.2em] uppercase text-[#0E2A47] font-medium">View Details</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <div className="space-y-2">
-                        <p className="text-[9px] tracking-[0.2em] text-[#C9A24D] uppercase">
-                          {product.category.replace(/-/g, " ")}
-                        </p>
-                        <h3 className="font-serif text-lg text-[#0E2A47] group-hover:text-[#C9A24D] transition-colors line-clamp-1">
-                          {product.name}
-                        </h3>
-                        <p className="text-sm text-[#0E2A47]/70">
-                          ₹{product.price.toLocaleString()}
-                        </p>
-                      </div>
-                    </Link>
-                  </motion.div>
-                ))
-              ) : (
-                <div className="col-span-full text-center py-20">
-                  <p className="text-[#0E2A47]/50 text-lg">No products found in this category</p>
-                  <button 
-                    onClick={() => handleCategoryChange("All")}
-                    className="mt-4 text-[#C9A24D] text-sm tracking-wider uppercase hover:underline"
-                  >
-                    View all products
-                  </button>
-                </div>
-              )}
-            </motion.div>
-          </AnimatePresence>
+                        <div className="space-y-2">
+                          <p className="text-[9px] tracking-[0.2em] text-[#C9A24D] uppercase">
+                            {product.category?.replace(/-/g, " ")}
+                          </p>
+                          <h3 className="font-serif text-lg text-[#0E2A47] group-hover:text-[#C9A24D] transition-colors line-clamp-1">
+                            {product.title}
+                          </h3>
+                          <p className="text-sm text-[#0E2A47]/70">
+                            ₹{product.price?.toLocaleString()}
+                          </p>
+                        </div>
+                      </Link>
+                    </motion.div>
+                  ))
+                ) : (
+                  <div className="col-span-full text-center py-20">
+                    <p className="text-[#0E2A47]/50 text-lg">No products found in this category</p>
+                    <button 
+                      onClick={() => handleCategoryChange("All")}
+                      className="mt-4 text-[#C9A24D] text-sm tracking-wider uppercase hover:underline"
+                    >
+                      View all products
+                    </button>
+                  </div>
+                )}
+              </motion.div>
+            </AnimatePresence>
+          )}
         </div>
       </section>
 

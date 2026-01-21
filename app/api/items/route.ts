@@ -35,18 +35,28 @@ export async function GET(request: NextRequest) {
 // POST create new item
 export async function POST(request: NextRequest) {
   try {
+    console.log("=== Create Item API Called ===")
     await connectToDatabase()
+    console.log("Database connected")
     
     const body = await request.json()
+    console.log("Request body:", {
+      title: body.title,
+      category: body.category,
+      imageCount: body.images?.length || 0
+    })
+    
     const { title, description, category, images, price, dimensions, material } = body
 
     if (!title || !description || !category) {
+      console.error("Validation failed - missing required fields")
       return NextResponse.json(
         { error: "Title, description, and category are required" },
         { status: 400 }
       )
     }
 
+    console.log("Creating new item...")
     const item = new Item({
       title,
       description,
@@ -58,9 +68,17 @@ export async function POST(request: NextRequest) {
     })
 
     await item.save()
+    console.log("Item created successfully:", item._id)
 
     return NextResponse.json(item, { status: 201 })
   } catch (error: any) {
+    console.error("Create item error:", error)
+    console.error("Error details:", {
+      message: error.message,
+      code: error.code,
+      stack: error.stack
+    })
+    
     if (error.code === 11000) {
       return NextResponse.json(
         { error: "An item with this title already exists" },
@@ -68,7 +86,7 @@ export async function POST(request: NextRequest) {
       )
     }
     return NextResponse.json(
-      { error: "Failed to create item" },
+      { error: error.message || "Failed to create item" },
       { status: 500 }
     )
   }
