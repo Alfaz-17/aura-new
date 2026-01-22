@@ -4,6 +4,7 @@ import { Item } from "@/models/Item"
 import { CATEGORIES } from "@/types/item"
 import { Plus, Search, Edit, Trash2 } from "lucide-react"
 import { DeleteItemButton } from "@/components/admin/delete-item-button"
+import { ItemFilters } from "@/components/admin/item-filters"
 
 interface ItemsPageProps {
   searchParams: Promise<{ category?: string; search?: string }>
@@ -47,38 +48,7 @@ export default async function ItemsPage({ searchParams }: ItemsPageProps) {
       </div>
 
       {/* Filters */}
-      <div className="bg-white border border-[#0E2A47]/10 p-4 mb-6">
-        <form className="flex flex-wrap gap-4">
-          <div className="flex-1 min-w-[200px] relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#0E2A47]/30" />
-            <input
-              type="text"
-              name="search"
-              defaultValue={search}
-              placeholder="Search items..."
-              className="w-full pl-10 pr-4 py-2 border border-[#0E2A47]/10 text-sm focus:outline-none focus:border-[#C9A24D]/50"
-            />
-          </div>
-          <select
-            name="category"
-            defaultValue={category || "all"}
-            className="px-4 py-2 border border-[#0E2A47]/10 text-sm focus:outline-none focus:border-[#C9A24D]/50 bg-white"
-          >
-            <option value="all">All Categories</option>
-            {CATEGORIES.map((cat) => (
-              <option key={cat.value} value={cat.value}>
-                {cat.label}
-              </option>
-            ))}
-          </select>
-          <button
-            type="submit"
-            className="px-6 py-2 bg-[#0E2A47] text-white text-xs tracking-wider uppercase hover:bg-[#1a3d5c] transition-colors"
-          >
-            Filter
-          </button>
-        </form>
-      </div>
+      <ItemFilters />
 
       {/* Items Table */}
       <div className="bg-white border border-[#0E2A47]/10 overflow-hidden">

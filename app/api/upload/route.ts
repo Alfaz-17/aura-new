@@ -20,14 +20,30 @@ export async function POST(request: NextRequest) {
     if (!cloudName || !apiKey || !apiSecret) {
       console.error("Cloudinary configuration missing:", {
         cloudName: !!cloudName,
-        apiKey: !!apiKey,
-        apiSecret: !!apiSecret
+        apiKey: apiKey ? `${apiKey.substring(0, 4)}...` : "missing",
+        apiSecret: apiSecret ? `${apiSecret.substring(0, 4)}...` : "missing"
       })
       return NextResponse.json(
         { error: "Cloudinary is not configured properly" },
         { status: 500 }
       )
     }
+    
+    
+    if (!cloudName || !apiKey || !apiSecret) {
+      console.error("Cloudinary configuration missing")
+      return NextResponse.json(
+        { error: "Cloudinary is not configured properly" },
+        { status: 500 }
+      )
+    }
+
+    // DEBUG: Print loaded config (partial)
+    console.log("Cloudinary Config Loaded:", {
+      cloud_name: cloudName,
+      api_key: apiKey?.substring(0, 4) + "***",
+      api_secret: apiSecret?.substring(0, 4) + "***"
+    })
     
     console.log("Cloudinary config validated")
     
