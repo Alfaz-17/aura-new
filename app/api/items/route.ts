@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     )
   }
-}
+};
 
 // POST create new item
 export async function POST(request: NextRequest) {
@@ -100,4 +100,5 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
-}
+};
+
