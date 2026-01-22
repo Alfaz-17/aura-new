@@ -2,12 +2,10 @@
 
 import { Navigation } from "@/components/navigation"
 import { HeroSection } from "@/components/hero-section"
-import { AboutSection } from "@/components/about-section"
 import { ArchiveSection } from "@/components/archive-section"
 import { SignatureSection } from "@/components/signature-section"
 import { TestimonialsSection } from "@/components/testimonials-section"
 import { ProcessSection } from "@/components/process-section"
-import { ContactSection } from "@/components/contact-section"
 import { PremiumFooter } from "@/components/premium-footer"
 import { motion, useScroll, useSpring } from "framer-motion"
 
@@ -33,9 +31,6 @@ export default function HomePage() {
         {/* 1. Hero Section */}
         <HeroSection />
 
-        {/* 2. About Section */}
-        <AboutSection />
-
         {/* 3. The Archive - Collections */}
         <ArchiveSection />
 
@@ -47,9 +42,6 @@ export default function HomePage() {
 
         {/* 6. How We Work - Process */}
         <ProcessSection />
-
-        {/* 7. Contact Section */}
-        <ContactSection />
       </main>
 
       <PremiumFooter />

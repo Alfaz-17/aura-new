@@ -24,7 +24,8 @@ export async function GET(request: NextRequest) {
     const items = await Item.find(query).sort({ createdAt: -1 }).lean()
     
     return NextResponse.json(items)
-  } catch (error) {
+  } catch (error: any) {
+    console.error("GET /api/items Error:", error)
     return NextResponse.json(
       { error: "Failed to fetch items" },
       { status: 500 }

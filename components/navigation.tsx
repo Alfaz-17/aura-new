@@ -57,7 +57,7 @@ export function Navigation() {
                 Home
               </Link>
               <Link
-                href="/#about"
+                href="/about"
                 className="text-[11px] tracking-[0.2em] uppercase font-medium text-white/70 hover:text-white transition-colors"
               >
                 About Us
@@ -134,7 +134,7 @@ export function Navigation() {
             {/* Right Navigation */}
             <div className="flex items-center gap-6 lg:gap-8">
               <Link
-                href="/#contact"
+                href="/contact"
                 className="hidden lg:block text-[11px] tracking-[0.2em] uppercase font-medium text-white/70 hover:text-white transition-colors"
               >
                 Contact
@@ -186,7 +186,7 @@ export function Navigation() {
               
               <nav className="flex-1 overflow-y-auto px-6 py-8 flex flex-col gap-6">
                 <Link href="/" onClick={() => setIsMenuOpen(false)} className="text-xl tracking-wide uppercase text-white hover:text-[#C9A24D] transition-colors">Home</Link>
-                <Link href="/#about" onClick={() => setIsMenuOpen(false)} className="text-xl tracking-wide uppercase text-white hover:text-[#C9A24D] transition-colors">About Us</Link>
+                <Link href="/about" onClick={() => setIsMenuOpen(false)} className="text-xl tracking-wide uppercase text-white hover:text-[#C9A24D] transition-colors">About Us</Link>
                 
                 <div className="flex flex-col gap-3">
                   <p className="text-[10px] tracking-[0.3em] uppercase text-[#C9A24D] font-medium border-b border-[#C9A24D]/20 pb-2">
@@ -209,7 +209,7 @@ export function Navigation() {
                   ))}
                 </div>
 
-                <Link href="/#contact" onClick={() => setIsMenuOpen(false)} className="text-xl tracking-wide uppercase text-white hover:text-[#C9A24D] transition-colors">Contact</Link>
+                <Link href="/contact" onClick={() => setIsMenuOpen(false)} className="text-xl tracking-wide uppercase text-white hover:text-[#C9A24D] transition-colors">Contact</Link>
                 
                 <hr className="border-white/10 mt-4" />
                 

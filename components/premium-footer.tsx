@@ -15,11 +15,11 @@ export function PremiumFooter() {
       { label: "Décor Accessories", href: "/shop?category=decor-accessories" },
     ],
     theHouse: [
-      { label: "Our Story", href: "/#about" },
+      { label: "Our Story", href: "/about" },
       { label: "Heritage", href: "/heritage" },
     ],
     connect: [
-      { label: "Contact Us", href: "/#contact" },
+      { label: "Contact Us", href: "/contact" },
     ],
   }
 
