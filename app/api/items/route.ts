@@ -58,8 +58,17 @@ export async function POST(request: NextRequest) {
     }
 
     console.log("Creating new item...")
+    // Generate slug
+    const slug = title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "")
+
+    console.log("Creating new item with slug:", slug)
+
     const item = new Item({
       title,
+      slug,
       description,
       category,
       images: images || [],

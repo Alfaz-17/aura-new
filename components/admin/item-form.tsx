@@ -190,21 +190,34 @@ export function ItemForm({ initialData }: ItemFormProps) {
                     setError("")
                     
                     try {
+                      // 1. Get Signature & Credentials from Server
+                      const signRes = await fetch("/api/sign-cloudinary", { method: "POST" })
+                      if (!signRes.ok) throw new Error("Failed to get upload signature")
+                      const signData = await signRes.json()
+                      const { signature, timestamp, folder, api_key, cloud_name } = signData
+
+                      // 2. Upload directly to Cloudinary
                       const uploadPromises = files.map(async (file) => {
                         const formData = new FormData()
                         formData.append("file", file)
+                        formData.append("api_key", api_key)
+                        formData.append("timestamp", timestamp.toString())
+                        formData.append("signature", signature)
+                        formData.append("folder", folder)
+
+                        const url = `https://api.cloudinary.com/v1_1/${cloud_name}/image/upload`
                         
-                        const res = await fetch("/api/upload", {
+                        const res = await fetch(url, {
                           method: "POST",
                           body: formData,
                         })
                         
                         if (!res.ok) {
                           const errorData = await res.json()
-                          throw new Error(errorData.error || "Upload failed")
+                          throw new Error(errorData.error?.message || "Upload failed")
                         }
                         const data = await res.json()
-                        return data.url
+                        return data.secure_url
                       })
 
                       const uploadedUrls = await Promise.all(uploadPromises)

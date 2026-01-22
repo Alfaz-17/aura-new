@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { LayoutDashboard, Package, Plus, Settings, Flower2 } from "lucide-react"
 
-const navItems = [
+export const navItems = [
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/items", label: "Items", icon: Package },
   { href: "/admin/items/new", label: "Add Item", icon: Plus },
