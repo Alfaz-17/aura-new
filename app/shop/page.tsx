@@ -9,7 +9,7 @@ import { Navigation } from "@/components/navigation"
 import { PremiumFooter } from "@/components/premium-footer"
 import { CategoryTabs } from "@/components/category-tabs"
 import { ArrowRight } from "lucide-react"
-import { ProductGridSkeleton } from "@/components/ui/loading-skeleton"
+import { LoadingSpinner } from "@/components/ui/loading-spinner"
 
 // Temporary static products until we connect to database
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
@@ -109,7 +109,7 @@ function ShopContent() {
           )}
 
           {isLoading ? (
-            <ProductGridSkeleton />
+            <LoadingSpinner />
           ) : (
             <AnimatePresence mode="wait">
               <motion.div
@@ -200,19 +200,13 @@ function ShopContent() {
   )
 }
 
-function ShopLoading() {
-  return (
-    <div className="flex items-center justify-center min-h-[50vh]">
-      <div className="animate-pulse text-[#0E2A47]/50">Loading...</div>
-    </div>
-  )
-}
+
 
 export default function ShopPage() {
   return (
     <main className="min-h-screen bg-[#F7F7F5]">
       <Navigation />
-      <Suspense fallback={<ShopLoading />}>
+      <Suspense fallback={<LoadingSpinner />}>
         <ShopContent />
       </Suspense>
       <PremiumFooter />
