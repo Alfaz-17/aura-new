@@ -2,25 +2,27 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { motion } from "framer-motion"
+import { motion, useReducedMotion } from "framer-motion"
 import { ArrowRight } from "lucide-react"
 
 export function HeroSection() {
-  return (
+    const shouldReduceMotion = useReducedMotion();
+
+  return  (
     <section className="relative h-screen w-full overflow-hidden">
-      {/* Background Image - Full Cover */}
+      {/* Background Image */}
       <div className="absolute inset-0">
         <Image
           src="/aura-hero-wide.png"
-          alt="Aura – House of Flowers Storefront"
+          alt="Aura – House of Flowers storefront with premium botanical displays"
           fill
           priority
-          sizes="100vw"
+          sizes="(min-width: 1024px) 100vw, 100vw"
           className="object-cover object-center"
         />
-        
-        {/* Strong Gradient Overlay (65-70%) */}
-        <div 
+
+        {/* Gradient Overlay */}
+        <div
           className="absolute inset-0"
           style={{
             background: `linear-gradient(
@@ -29,34 +31,34 @@ export function HeroSection() {
               rgba(14, 42, 71, 0.60) 35%,
               rgba(14, 42, 71, 0.75) 65%,
               rgba(14, 42, 71, 0.90) 100%
-            )`
+            )`,
           }}
         />
-        
-        {/* Stronger Vignette */}
-        <div 
+
+        {/* Vignette */}
+        <div
           className="absolute inset-0"
           style={{
             background: `radial-gradient(
               ellipse at center,
               transparent 10%,
               rgba(14, 42, 71, 0.60) 100%
-            )`
+            )`,
           }}
         />
       </div>
 
-      {/* Content - Centered */}
-      <div className="relative z-10 h-full flex flex-col items-center justify-center px-6 md:px-12">
+      {/* Content */}
+      <div className="relative z-10 h-full flex items-center justify-center px-6 md:px-12">
         <motion.div
-          initial={{ opacity: 0 }}
+          initial={shouldReduceMotion ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1.2, delay: 0.3 }}
           className="text-center w-full max-w-3xl mx-auto"
         >
           {/* Headline */}
-          <motion.h1 
-            initial={{ opacity: 0, y: 25 }}
+          <motion.h1
+            initial={shouldReduceMotion ? false : { opacity: 0, y: 25 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.9, delay: 0.6 }}
             className="font-serif mb-5 md:mb-6 drop-shadow-lg"
@@ -70,19 +72,20 @@ export function HeroSection() {
           </motion.h1>
 
           {/* Description */}
-          <motion.p 
-            initial={{ opacity: 0, y: 20 }}
+          <motion.p
+            initial={shouldReduceMotion ? false : { opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.8 }}
             className="text-white text-base md:text-lg lg:text-xl tracking-wide font-light leading-relaxed mb-8 md:mb-10 max-w-xl mx-auto drop-shadow-md"
           >
-            Direct from our workshop to your refined spaces,<br className="hidden sm:block" />
+            Direct from our workshop to your refined spaces,
+            <br className="hidden sm:block" />
             creating timeless artificial flora since 2024.
           </motion.p>
 
-          {/* CTA Buttons */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
+          {/* CTA */}
+          <motion.div
+            initial={shouldReduceMotion ? false : { opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 1.0 }}
             className="flex flex-col items-center gap-5"
@@ -102,7 +105,7 @@ export function HeroSection() {
                 Enquire Now
               </motion.button>
             </a>
-            
+
             {/* Secondary CTA */}
             <Link href="/shop" className="group">
               <span className="text-white/70 text-sm md:text-base tracking-[0.15em] uppercase font-light flex items-center gap-2 hover:text-white transition-colors">
@@ -114,7 +117,7 @@ export function HeroSection() {
 
           {/* Trust Signal */}
           <motion.p
-            initial={{ opacity: 0 }}
+            initial={shouldReduceMotion ? false : { opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8, delay: 1.3 }}
             className="text-white/40 text-xs md:text-sm tracking-[0.15em] uppercase font-light mt-14 md:mt-16"
