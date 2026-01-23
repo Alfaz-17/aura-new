@@ -44,10 +44,10 @@ export function Navigation() {
         className="fixed top-0 left-0 right-0 z-50 bg-[#0E2A47] border-b border-[#C9A24D]/20"
       >
         <nav className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="flex h-16 lg:h-20 items-center justify-between">
+          <div className="grid grid-cols-3 h-16 lg:h-20 items-center">
             
-            {/* Left Navigation */}
-            <div className="hidden lg:flex items-center gap-10">
+            {/* Left Navigation - Aligned Start */}
+            <div className="hidden lg:flex items-center gap-10 justify-self-start">
               <Link
                 href="/"
                 className={`text-[11px] tracking-[0.2em] uppercase font-medium transition-colors ${
@@ -110,29 +110,33 @@ export function Navigation() {
               </div>
             </div>
 
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="lg:hidden p-2 -ml-2 text-white"
-              aria-label="Toggle menu"
-            >
-              {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
+            {/* Mobile Menu Button - Visible only on mobile */}
+            <div className="lg:hidden justify-self-start">
+              <button
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="p-2 -ml-2 text-white"
+                aria-label="Toggle menu"
+              >
+                {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </button>
+            </div>
 
-            {/* Center Logo */}
-            <Link href="/" className="absolute left-1/2 -translate-x-1/2">
-              <Image
-                src="/logo.png"
-                alt="Aura"
-                width={140}
-                height={50}
-                className="h-20 lg:h-20 mt-3 w-auto"
-                priority
-              />
-            </Link>
+            {/* Center Logo - Aligned Center */}
+            <div className="justify-self-center flex justify-center">
+              <Link href="/">
+                <Image
+                  src="/logo.png"
+                  alt="Aura"
+                  width={140}
+                  height={50}
+                  className="h-20 lg:h-20 mt-3 w-auto object-contain"
+                  priority
+                />
+              </Link>
+            </div>
 
-            {/* Right Navigation */}
-            <div className="flex items-center gap-6 lg:gap-8">
+            {/* Right Navigation - Aligned End */}
+            <div className="flex items-center gap-6 lg:gap-8 justify-self-end">
               <Link
                 href="/contact"
                 className="hidden lg:block text-[11px] tracking-[0.2em] uppercase font-medium text-white/70 hover:text-white transition-colors"

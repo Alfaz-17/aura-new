@@ -17,7 +17,6 @@ export function HeroSection() {
           priority
           sizes="100vw"
           className="object-cover object-center"
-          style={{ objectPosition: 'center 30%' }}
         />
         
         {/* Strong Gradient Overlay (65-70%) */}
@@ -26,10 +25,10 @@ export function HeroSection() {
           style={{
             background: `linear-gradient(
               to bottom,
-              rgba(14, 42, 71, 0.60) 0%,
-              rgba(14, 42, 71, 0.50) 35%,
-              rgba(14, 42, 71, 0.65) 65%,
-              rgba(14, 42, 71, 0.80) 100%
+              rgba(14, 42, 71, 0.70) 0%,
+              rgba(14, 42, 71, 0.60) 35%,
+              rgba(14, 42, 71, 0.75) 65%,
+              rgba(14, 42, 71, 0.90) 100%
             )`
           }}
         />
@@ -40,8 +39,8 @@ export function HeroSection() {
           style={{
             background: `radial-gradient(
               ellipse at center,
-              transparent 20%,
-              rgba(14, 42, 71, 0.40) 100%
+              transparent 10%,
+              rgba(14, 42, 71, 0.60) 100%
             )`
           }}
         />
@@ -60,7 +59,7 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 25 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.9, delay: 0.6 }}
-            className="font-serif mb-5 md:mb-6"
+            className="font-serif mb-5 md:mb-6 drop-shadow-lg"
           >
             <span className="block text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl leading-[1.2] tracking-tight">
               Botanical <em className="italic text-[#C9A24D]">Elegance</em>
@@ -75,7 +74,7 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.8 }}
-            className="text-white/85 text-base md:text-lg lg:text-xl tracking-wide font-light leading-relaxed mb-8 md:mb-10 max-w-xl mx-auto"
+            className="text-white text-base md:text-lg lg:text-xl tracking-wide font-light leading-relaxed mb-8 md:mb-10 max-w-xl mx-auto drop-shadow-md"
           >
             Luxury floral installations & bespoke arrangements<br className="hidden sm:block" />
             for refined spaces, events & celebrations.
