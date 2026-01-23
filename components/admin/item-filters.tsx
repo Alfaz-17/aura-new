@@ -2,13 +2,14 @@
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
+import { useCategories } from "@/hooks/use-categories"
 import { Search } from "lucide-react"
-import { CATEGORIES } from "@/types/item"
 
 export function ItemFilters() {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  const { categories } = useCategories()
 
   const [search, setSearch] = useState(searchParams.get("search") || "")
   const [category, setCategory] = useState(searchParams.get("category") || "all")
@@ -61,8 +62,8 @@ export function ItemFilters() {
           className="px-4 py-2 border border-[#0E2A47]/10 text-sm focus:outline-none focus:border-[#C9A24D]/50 bg-white transition-colors cursor-pointer"
         >
           <option value="all">All Categories</option>
-          {CATEGORIES.map((cat) => (
-            <option key={cat.value} value={cat.value}>
+          {categories.map((cat) => (
+            <option key={cat._id} value={cat.value}>
               {cat.label}
             </option>
           ))}

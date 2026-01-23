@@ -9,7 +9,7 @@ export type CollectionType =
 
 export interface IItem {
   _id?: string
-  title: string
+  title: stringF
   slug: string
   description: string
   images: string[]

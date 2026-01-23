@@ -8,22 +8,27 @@ interface CategoryTabsProps {
   onCategoryChange: (category: string) => void
 }
 
-const categories = [
-  { value: "All", label: "All", icon: Sparkles },
-  { value: "artificial-flowers", label: "Flowers", icon: Flower2 },
-  { value: "artificial-green-plants", label: "Plants", icon: Trees },
-  { value: "bonsai", label: "Bonsai", icon: Sprout },
-  { value: "hanging-greenery", label: "Hanging", icon: Leaf },
-  { value: "decor-accessories", label: "Décor", icon: Sparkles },
-]
+import { useCategories } from "@/hooks/use-categories"
+
+// ... remove static categories array ...
 
 export function CategoryTabs({ activeCategory, onCategoryChange }: CategoryTabsProps) {
+  const { categories } = useCategories()
+
+  const allCategories = [
+    { value: "All", label: "All", icon: Sparkles },
+    ...categories
+  ]
+
   return (
     <section className="sticky top-16 lg:top-20 z-30 bg-[#F7F7F5] border-b border-[#0E2A47]/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-start lg:justify-center gap-1 sm:gap-2 py-4 overflow-x-auto scrollbar-hide">
-          {categories.map((category) => {
+          {allCategories.map((category) => {
             const isActive = activeCategory === category.value
+            // Use dynamic icon if present, else default
+            const Icon = category.icon || Sparkles
+            
             return (
               <motion.button
                 key={category.value}
@@ -46,7 +51,7 @@ export function CategoryTabs({ activeCategory, onCategoryChange }: CategoryTabsP
                 )}
                 
                 {/* Icon */}
-                <category.icon 
+                <Icon
                   className={`relative z-10 h-3.5 w-3.5 sm:h-4 sm:w-4 ${
                     isActive ? "text-[#C9A24D]" : ""
                   }`} 

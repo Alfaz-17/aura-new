@@ -3,24 +3,24 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { MessageCircle, Menu, X, Search, Flower2, Trees, Sprout, Leaf, Sparkles } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
-// Categories with icons
-const CATEGORIES = [
-  { value: "artificial-flowers", label: "Artificial Flowers", icon: Flower2 },
-  { value: "artificial-green-plants", label: "Artificial Green Plants", icon: Trees },
-  { value: "bonsai", label: "Bonsai", icon: Sprout },
-  { value: "hanging-greenery", label: "Hanging Greenery", icon: Leaf },
-  { value: "decor-accessories", label: "Décor Accessories", icon: Sparkles },
-]
+import { useCategories } from "@/hooks/use-categories"
+
+// ...
 
 export function Navigation() {
+  const { categories } = useCategories()
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isCollectionOpen, setIsCollectionOpen] = useState(false)
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
   const pathname = usePathname()
+  const router = useRouter()
+
 
   useEffect(() => {
     const handleScroll = () => {
@@ -33,7 +33,17 @@ export function Navigation() {
   useEffect(() => {
     setIsMenuOpen(false)
     setIsCollectionOpen(false)
+    setIsSearchOpen(false)
   }, [pathname])
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (searchQuery.trim()) {
+      router.push(`/shop?search=${encodeURIComponent(searchQuery)}`)
+      setIsSearchOpen(false)
+      setSearchQuery("")
+    }
+  }
 
   return (
     <>
@@ -94,16 +104,25 @@ export function Navigation() {
                         All Products
                       </Link>
                       <div className="h-[1px] bg-white/10 my-2 mx-2" />
-                      {CATEGORIES.map((cat) => (
+                      {categories.map((cat) => {
+                        const Icon = cat.icon || Sparkles
+                        return (
                         <Link
-                          key={cat.value}
+                          key={cat._id}
                           href={`/shop?category=${cat.value}`}
                           className="flex items-center gap-3 px-4 py-2.5 text-[10px] tracking-widest uppercase text-white/70 hover:text-[#C9A24D] hover:bg-white/5 transition-all group"
                         >
-                          <cat.icon className="h-4 w-4 text-white/40 group-hover:text-[#C9A24D] transition-colors" strokeWidth={1.5} />
+                          {cat.image ? (
+                            <div className="relative h-6 w-6 rounded-sm overflow-hidden border border-white/10 group-hover:border-[#C9A24D] transition-colors">
+                              <Image src={cat.image} alt="" fill className="object-cover" />
+                            </div>
+                          ) : (
+                            <Icon className="h-4 w-4 text-white/40 group-hover:text-[#C9A24D] transition-colors" strokeWidth={1.5} />
+                          )}
                           {cat.label}
                         </Link>
-                      ))}
+                        )
+                      })}
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -129,7 +148,7 @@ export function Navigation() {
                   alt="Aura"
                   width={140}
                   height={50}
-                  className="h-20 lg:h-20 mt-3 w-auto object-contain"
+                  className="h-20 lg:h-20  w-auto object-contain"
                   priority
                 />
               </Link>
@@ -144,12 +163,44 @@ export function Navigation() {
                 Contact
               </Link>
               
-              <button
-                aria-label="Search"
-                className="hidden sm:block p-2 text-white/70 hover:text-white transition-colors"
-              >
-                <Search className="h-5 w-5" />
-              </button>
+              <div className="flex items-center">
+                <AnimatePresence mode="wait">
+                  {isSearchOpen ? (
+                    <motion.form
+                      initial={{ width: 0, opacity: 0 }}
+                      animate={{ width: 160, opacity: 1 }}
+                      exit={{ width: 0, opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      onSubmit={handleSearch}
+                      className="relative flex items-center"
+                    >
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search..."
+                        autoFocus
+                        className="w-full bg-transparent border-b border-white/30 text-white text-sm py-1 pr-8 focus:outline-none focus:border-[#C9A24D] placeholder:text-white/40"
+                        onBlur={() => !searchQuery && setIsSearchOpen(false)}
+                      />
+                      <button 
+                        type="submit" 
+                        className="absolute right-0 text-white/70 hover:text-[#C9A24D]"
+                      >
+                        <Search className="h-4 w-4" />
+                      </button>
+                    </motion.form>
+                  ) : (
+                    <button
+                      onClick={() => setIsSearchOpen(true)}
+                      aria-label="Search"
+                      className="p-2 text-white/70 hover:text-white transition-colors"
+                    >
+                      <Search className="h-5 w-5" />
+                    </button>
+                  )}
+                </AnimatePresence>
+              </div>
               
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -188,7 +239,7 @@ export function Navigation() {
                 </button>
               </div>
               
-              <nav className="flex-1 overflow-y-auto px-6 py-8 flex flex-col gap-6">
+              <nav className="flex-1 overflow-y-auto px-6 py-8 flex flex-col gap-6 ">
                 <Link href="/" onClick={() => setIsMenuOpen(false)} className="text-xl tracking-wide uppercase text-white hover:text-[#C9A24D] transition-colors">Home</Link>
                 <Link href="/about" onClick={() => setIsMenuOpen(false)} className="text-xl tracking-wide uppercase text-white hover:text-[#C9A24D] transition-colors">About Us</Link>
                 
@@ -200,17 +251,29 @@ export function Navigation() {
                     <Sparkles className="h-4 w-4 text-[#C9A24D]" />
                     All Products
                   </Link>
-                  {CATEGORIES.map((cat) => (
+                  {categories.map((cat) => {
+                    // If image exists, use it. Else use Icon.
+                    const Icon = cat.icon || Sparkles
+                    
+                    return (
                     <Link
-                      key={cat.value}
+                      key={cat._id}
                       href={`/shop?category=${cat.value}`}
                       onClick={() => setIsMenuOpen(false)}
-                      className="text-base tracking-wide uppercase text-white/60 pl-2 flex items-center gap-3 hover:text-white"
+                      className="text-base tracking-wide uppercase text-white/60 pl-2 flex items-center gap-3 hover:text-white group"
                     >
-                      <cat.icon className="h-4 w-4 text-white/40" strokeWidth={1.5} />
+                      {cat.image ? (
+                        <div className="relative h-6 w-6 rounded-sm overflow-hidden border border-white/10 group-hover:border-[#C9A24D] transition-colors">
+                          <Image src={cat.image} alt="" fill className="object-cover" />
+                        </div>
+                      ) : (
+                        <Icon className="h-4 w-4 text-white/40" strokeWidth={1.5} />
+                      )}
+                      
                       {cat.label}
                     </Link>
-                  ))}
+                    )
+                  })}
                 </div>
 
                 <Link href="/contact" onClick={() => setIsMenuOpen(false)} className="text-xl tracking-wide uppercase text-white hover:text-[#C9A24D] transition-colors">Contact</Link>

@@ -4,7 +4,10 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Save, Upload } from "lucide-react"
-import { CATEGORIES, CollectionType } from "@/types/item"
+import { useCategories } from "@/hooks/use-categories"
+
+// Loose type for category in dynamic system, or import CollectionType but treat it as string
+type CollectionType = string 
 
 interface ItemFormProps {
   initialData?: {
@@ -21,6 +24,7 @@ interface ItemFormProps {
 
 export function ItemForm({ initialData }: ItemFormProps) {
   const router = useRouter()
+  const { categories } = useCategories()
   const isEditing = !!initialData?._id
 
   const [formData, setFormData] = useState({
@@ -156,8 +160,8 @@ export function ItemForm({ initialData }: ItemFormProps) {
             className="w-full border border-[#0E2A47]/10 px-4 py-3 text-[#0E2A47] focus:outline-none focus:border-[#C9A24D]/50 bg-white"
             required
           >
-            {CATEGORIES.map((cat) => (
-              <option key={cat.value} value={cat.value}>
+            {categories.map((cat) => (
+              <option key={cat._id} value={cat.value}>
                 {cat.label}
               </option>
             ))}

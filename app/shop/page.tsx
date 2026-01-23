@@ -10,14 +10,20 @@ import { PremiumFooter } from "@/components/premium-footer"
 import { CategoryTabs } from "@/components/category-tabs"
 import { ArrowRight } from "lucide-react"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
+import { ShopToolbar } from "@/components/shop/shop-toolbar"
 
-// Temporary static products until we connect to database
-const fetcher = (url: string) => fetch(url).then((res) => res.json())
+// ... imports remain the same
 
 function ShopContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
+  
   const categoryParam = searchParams.get("category")
+  const searchQuery = searchParams.get("search")
+  const minPrice = searchParams.get("minPrice")
+  const maxPrice = searchParams.get("maxPrice")
+  const sort = searchParams.get("sort")
+  
   const [activeCategory, setActiveCategory] = useState(categoryParam || "All")
   const [products, setProducts] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -25,6 +31,8 @@ function ShopContent() {
   useEffect(() => {
     if (categoryParam) {
       setActiveCategory(categoryParam)
+    } else {
+      setActiveCategory("All")
     }
   }, [categoryParam])
 
@@ -32,9 +40,19 @@ function ShopContent() {
     const fetchProducts = async () => {
       setIsLoading(true)
       try {
-        const url = activeCategory === "All" 
-          ? "/api/items"
-          : `/api/items?category=${activeCategory}`
+        const params = new URLSearchParams()
+        
+        if (activeCategory !== "All") {
+          params.append("category", activeCategory)
+        }
+        
+        if (searchQuery) params.append("search", searchQuery)
+        if (minPrice) params.append("minPrice", minPrice)
+        if (maxPrice) params.append("maxPrice", maxPrice)
+        if (sort) params.append("sort", sort)
+        
+        const queryString = params.toString()
+        const url = `/api/items${queryString ? `?${queryString}` : ""}`
         
         const res = await fetch(url)
         if (res.ok) {
@@ -49,7 +67,12 @@ function ShopContent() {
     }
 
     fetchProducts()
-  }, [activeCategory])
+  }, [activeCategory, searchQuery, minPrice, maxPrice, sort])
+
+  // ... handleCategoryChange remains similar but might need to preserve other params if desired, 
+  // currently user request implies "proper filter", usually changing category resets filters but maybe not search?
+  // Let's keep it simple: Changing category pushes to /shop?category=X, effectively resetting others.
+  // This is standard behavior for a main navigation change.
 
   const handleCategoryChange = (category: string) => {
     setActiveCategory(category)
@@ -63,7 +86,7 @@ function ShopContent() {
   return (
     <>
       {/* Hero Banner */}
-      <section className="relative h-[45vh] min-h-[350px] flex items-center justify-center overflow-hidden">
+      <section className="relative h-[35vh] min-h-[300px] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
           <Image
             src="/cinematic-floral.png"
@@ -83,10 +106,7 @@ function ShopContent() {
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         >
           <span className="text-[10px] tracking-[0.4em] uppercase text-[#C9A24D] mb-4 block">Shop</span>
-          <h1 className="font-serif text-4xl md:text-6xl lg:text-7xl mb-4">Our <em className="italic text-[#C9A24D]">Collection</em></h1>
-          <p className="text-base md:text-lg text-white/70 max-w-xl mx-auto font-light tracking-wide">
-            Curated botanical artistry, handcrafted with intention
-          </p>
+          <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl mb-4">Our <em className="italic text-[#C9A24D]">Collection</em></h1>
         </motion.div>
       </section>
 
@@ -95,30 +115,38 @@ function ShopContent() {
         activeCategory={activeCategory} 
         onCategoryChange={handleCategoryChange} 
       />
+      
+      {/* Shop Toolbar */}
+      <ShopToolbar />
 
       {/* Product Grid */}
-      <section className="py-16 md:py-20">
+      <section className="py-12 md:py-16">
         <div className="max-w-7xl mx-auto px-6">
           {/* Results Count */}
           {!isLoading && (
             <div className="mb-8 flex items-center justify-between">
-              <p className="text-[#0E2A47]/50 text-sm">
-                Showing <span className="text-[#0E2A47] font-medium">{products.length}</span> products
+              <p className="text-[#0E2A47]/50 text-xs tracking-wider uppercase">
+                Showing <span className="text-[#0E2A47] font-medium">{products.length}</span> results
+                {searchQuery && (
+                  <> for "<span className="text-[#0E2A47] font-medium">{searchQuery}</span>"</>
+                )}
               </p>
             </div>
           )}
 
           {isLoading ? (
-            <LoadingSpinner />
+            <div className="min-h-[400px]">
+               <LoadingSpinner />
+            </div>
           ) : (
             <AnimatePresence mode="wait">
               <motion.div
-                key={activeCategory}
+                key={`${activeCategory}-${searchQuery}-${minPrice}-${maxPrice}-${sort}`}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.4 }}
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8"
+                className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6 lg:gap-8"
               >
                 {products.length > 0 ? (
                   products.map((product, index) => (
@@ -128,47 +156,58 @@ function ShopContent() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.5, delay: index * 0.08 }}
                     >
-                      <Link href={`/product/${product._id}`} className="group block">
-                        <div className="relative aspect-[3/4] overflow-hidden bg-white mb-4">
+                      <Link href={`/product/${product._id}`} className="group block h-full">
+                        <div className="relative h-[35dvh] sm:h-auto sm:aspect-[3/4] overflow-hidden bg-white mb-3 sm:mb-4">
                           <Image
                             src={product.images?.[0] || "/placeholder-image.jpg"}
                             alt={product.title}
                             fill
-                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                             className="object-cover transition-transform duration-700 group-hover:scale-105"
                           />
                           {/* Hover Overlay */}
                           <div className="absolute inset-0 bg-[#0E2A47]/0 group-hover:bg-[#0E2A47]/20 transition-colors duration-300" />
-                          {/* Quick View */}
-                          <div className="absolute inset-x-4 bottom-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                            <div className="bg-white/95 backdrop-blur-sm px-4 py-3 text-center">
-                              <span className="text-[10px] tracking-[0.2em] uppercase text-[#0E2A47] font-medium">View Details</span>
-                            </div>
+                          
+                          {/* Quick View Button - centered and elegant */}
+                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                             <div className="bg-white/95 backdrop-blur-md px-6 py-3 text-[#0E2A47] text-[10px] tracking-[0.2em] uppercase font-medium transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 shadow-lg border border-[#C9A24D]/20">
+                               View Details
+                             </div>
                           </div>
                         </div>
-                        <div className="space-y-2">
+                        <div className="space-y-1.5">
                           <p className="text-[9px] tracking-[0.2em] text-[#C9A24D] uppercase">
                             {product.category?.replace(/-/g, " ")}
                           </p>
                           <h3 className="font-serif text-lg text-[#0E2A47] group-hover:text-[#C9A24D] transition-colors line-clamp-1">
                             {product.title}
                           </h3>
-                          <p className="text-sm text-[#0E2A47]/70">
-                            ₹{product.price?.toLocaleString()}
-                          </p>
+                          <div className="flex items-center gap-2">
+                             <span className="text-sm font-medium text-[#0E2A47]/90">
+                              ₹{product.price?.toLocaleString()}
+                             </span>
+                          </div>
                         </div>
                       </Link>
                     </motion.div>
                   ))
                 ) : (
-                  <div className="col-span-full text-center py-20">
-                    <p className="text-[#0E2A47]/50 text-lg">No products found in this category</p>
-                    <button 
-                      onClick={() => handleCategoryChange("All")}
-                      className="mt-4 text-[#C9A24D] text-sm tracking-wider uppercase hover:underline"
-                    >
-                      View all products
-                    </button>
+                  <div className="col-span-full text-center py-20 bg-white border border-[#0E2A47]/5 p-8">
+                     <div className="max-w-md mx-auto">
+                        <p className="font-serif text-xl text-[#0E2A47] mb-2">No products found</p>
+                        <p className="text-[#0E2A47]/50 text-sm mb-6">
+                          We couldn't find any products matching your current filters.
+                        </p>
+                        <button 
+                          onClick={() => {
+                             router.push("/shop")
+                             // Also reset activeCategory locally if needed, but router push handles it via effect
+                          }}
+                          className="bg-[#0E2A47] text-white px-8 py-3 text-xs tracking-widest uppercase hover:bg-[#0E2A47]/90 transition-colors"
+                        >
+                          Clear All Filters
+                        </button>
+                     </div>
                   </div>
                 )}
               </motion.div>

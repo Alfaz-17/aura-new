@@ -1,7 +1,6 @@
 import Link from "next/link"
 import { connectToDatabase } from "@/lib/mongodb"
 import { Item } from "@/models/Item"
-import { CATEGORIES } from "@/types/item"
 import { Plus, Search, Edit, Trash2 } from "lucide-react"
 import { DeleteItemButton } from "@/components/admin/delete-item-button"
 import { ItemFilters } from "@/components/admin/item-filters"

@@ -62,10 +62,10 @@ export function HeroSection() {
             className="font-serif mb-5 md:mb-6 drop-shadow-lg"
           >
             <span className="block text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl leading-[1.2] tracking-tight">
-              Botanical <em className="italic text-[#C9A24D]">Elegance</em>
+              Manufacturing Premium
             </span>
             <span className="block text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl leading-[1.2] tracking-tight mt-1">
-              & <em className="italic text-[#C9A24D]">Timeless</em> Design
+              Botanical <em className="italic text-[#C9A24D]">Elegance</em>
             </span>
           </motion.h1>
 
@@ -76,8 +76,8 @@ export function HeroSection() {
             transition={{ duration: 0.8, delay: 0.8 }}
             className="text-white text-base md:text-lg lg:text-xl tracking-wide font-light leading-relaxed mb-8 md:mb-10 max-w-xl mx-auto drop-shadow-md"
           >
-            Luxury floral installations & bespoke arrangements<br className="hidden sm:block" />
-            for refined spaces, events & celebrations.
+            Direct from our workshop to your refined spaces,<br className="hidden sm:block" />
+            creating timeless artificial flora since 2024.
           </motion.p>
 
           {/* CTA Buttons */}

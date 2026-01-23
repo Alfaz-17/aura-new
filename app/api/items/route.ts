@@ -10,18 +10,38 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const category = searchParams.get("category")
     const search = searchParams.get("search")
+    const minPrice = searchParams.get("minPrice")
+    const maxPrice = searchParams.get("maxPrice")
+    const sort = searchParams.get("sort")
     
     const query: any = {}
     
-    if (category && category !== "all") {
+    if (category && category !== "all" && category !== "All") {
       query.category = category
     }
     
     if (search) {
       query.title = { $regex: search, $options: "i" }
     }
+
+    // Price Filter
+    if (minPrice || maxPrice) {
+      query.price = {}
+      if (minPrice) query.price.$gte = Number(minPrice)
+      if (maxPrice) query.price.$lte = Number(maxPrice)
+    }
+
+    // Sort Options
+    let sortOptions: any = { createdAt: -1 } // Default: Newest
+    if (sort === "price_asc") {
+      sortOptions = { price: 1 }
+    } else if (sort === "price_desc") {
+      sortOptions = { price: -1 }
+    } else if (sort === "newest") {
+      sortOptions = { createdAt: -1 }
+    }
     
-    const items = await Item.find(query).sort({ createdAt: -1 }).lean()
+    const items = await Item.find(query).sort(sortOptions).lean()
     
     return NextResponse.json(items)
   } catch (error: any) {

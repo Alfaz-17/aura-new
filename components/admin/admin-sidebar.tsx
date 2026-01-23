@@ -6,6 +6,7 @@ import { LayoutDashboard, Package, Plus, Flower2 } from "lucide-react"
 
 export const navItems = [
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/admin/categories", label: "Categories", icon: Flower2 },
   { href: "/admin/items", label: "Items", icon: Package },
   { href: "/admin/items/new", label: "Add Item", icon: Plus },
 ]
