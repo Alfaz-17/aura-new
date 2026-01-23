@@ -117,12 +117,10 @@ export function PremiumFooter() {
               Aura
             </Link>
             <div className="flex items-center gap-6">
-              <a href="https://instagram.com" className="text-background/40 hover:text-accent transition-colors" aria-label="Instagram">
+              <a href="https://www.instagram.com/aura_house_of_flowers?igsh=YW45bHg1dmNkc2d1" className="text-background/40 hover:text-accent transition-colors" aria-label="Instagram">
                 <Instagram className="h-4 w-4 stroke-[1.2]" />
               </a>
-              <a href="https://facebook.com" className="text-background/40 hover:text-accent transition-colors" aria-label="Facebook">
-                <Facebook className="h-4 w-4 stroke-[1.2]" />
-              </a>
+
             </div>
           </div>
 
