@@ -105,7 +105,7 @@ export function Navigation() {
                       </Link>
                       <div className="h-[1px] bg-white/10 my-2 mx-2" />
                       {categories.map((cat) => {
-                        const Icon = cat.icon || Sparkles
+                        const Icon = cat.icon || Flower2
                         return (
                         <Link
                           key={cat._id}
@@ -253,7 +253,7 @@ export function Navigation() {
                   </Link>
                   {categories.map((cat) => {
                     // If image exists, use it. Else use Icon.
-                    const Icon = cat.icon || Sparkles
+                    const Icon = cat.icon || Flower2
                     
                     return (
                     <Link

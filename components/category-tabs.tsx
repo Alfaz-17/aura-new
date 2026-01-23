@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Flower2, Trees, Sprout, Leaf, Sparkles } from "lucide-react"
+import { Flower2 } from "lucide-react"
 
 interface CategoryTabsProps {
   activeCategory: string
@@ -10,24 +10,22 @@ interface CategoryTabsProps {
 
 import { useCategories } from "@/hooks/use-categories"
 
-// ... remove static categories array ...
-
 export function CategoryTabs({ activeCategory, onCategoryChange }: CategoryTabsProps) {
   const { categories } = useCategories()
 
   const allCategories = [
-    { value: "All", label: "All", icon: Sparkles },
+    { value: "All", label: "All", icon: Flower2 },
     ...categories
   ]
 
   return (
     <section className="sticky top-16 lg:top-20 z-30 bg-[#F7F7F5] border-b border-[#0E2A47]/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="flex items-center justify-start lg:justify-center gap-1 sm:gap-2 py-4 overflow-x-auto scrollbar-hide">
+        <div className="flex items-center justify-start lg:justify-center gap-1 sm:gap-2 py-2 overflow-x-auto scrollbar-hide">
           {allCategories.map((category) => {
             const isActive = activeCategory === category.value
             // Use dynamic icon if present, else default
-            const Icon = category.icon || Sparkles
+            const Icon = category.icon || Flower2
             
             return (
               <motion.button

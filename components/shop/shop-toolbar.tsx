@@ -52,7 +52,7 @@ export function ShopToolbar() {
   }
 
   return (
-    <section className="sticky top-[138px] lg:top-[160px] z-20 bg-[#F7F7F5]/95 backdrop-blur-sm border-b border-[#0E2A47]/10 py-4">
+    <section className="sticky top-[116px] lg:top-[136px] z-20 bg-[#F7F7F5]/95 backdrop-blur-sm border-b border-[#0E2A47]/10 py-2">
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
           
