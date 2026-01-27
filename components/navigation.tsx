@@ -163,28 +163,16 @@ export function Navigation() {
                 Contact
               </Link>
               
-<<<<<<< HEAD
               <div className="flex items-center relative">
-=======
-              <div className="flex items-center">
->>>>>>> 666998437c0c4430679dbea4368bb188913d1fbc
                 <AnimatePresence mode="wait">
                   {isSearchOpen ? (
                     <motion.form
                       initial={{ width: 0, opacity: 0 }}
-<<<<<<< HEAD
                       animate={{ width: typeof window !== 'undefined' && window.innerWidth < 640 ? 120 : 160, opacity: 1 }}
                       exit={{ width: 0, opacity: 0 }}
                       transition={{ duration: 0.3 }}
                       onSubmit={handleSearch}
                       className="absolute right-0 flex items-center bg-[#0E2A47] z-10"
-=======
-                      animate={{ width: 160, opacity: 1 }}
-                      exit={{ width: 0, opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                      onSubmit={handleSearch}
-                      className="relative flex items-center"
->>>>>>> 666998437c0c4430679dbea4368bb188913d1fbc
                     >
                       <input
                         type="text"
@@ -192,11 +180,7 @@ export function Navigation() {
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder="Search..."
                         autoFocus
-<<<<<<< HEAD
                         className="w-full bg-transparent border-b border-white/30 text-white text-xs py-1 pr-8 focus:outline-none focus:border-[#C9A24D] placeholder:text-white/40"
-=======
-                        className="w-full bg-transparent border-b border-white/30 text-white text-sm py-1 pr-8 focus:outline-none focus:border-[#C9A24D] placeholder:text-white/40"
->>>>>>> 666998437c0c4430679dbea4368bb188913d1fbc
                         onBlur={() => !searchQuery && setIsSearchOpen(false)}
                       />
                       <button 
