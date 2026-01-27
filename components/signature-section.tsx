@@ -3,6 +3,7 @@
 import { motion } from "framer-motion"
 import Link from "next/link"
 import Image from "next/image"
+import { optimizeCloudinaryUrl } from "@/lib/cloudinary"
 import { ArrowRight } from "lucide-react"
 
 const signaturePieces = [
@@ -62,7 +63,7 @@ export function SignatureSection() {
             >
               <div className="relative aspect-[3/4] overflow-hidden mb-6">
                 <Image
-                  src={piece.image}
+                  src={optimizeCloudinaryUrl(piece.image)}
                   alt={piece.title}
                   fill
                   sizes="(max-width: 768px) 100vw, 33vw"

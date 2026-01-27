@@ -3,6 +3,7 @@
 import { useState } from "react"
 import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
+import { optimizeCloudinaryUrl } from "@/lib/cloudinary"
 
 interface ProductGalleryProps {
   images: string[]
@@ -25,7 +26,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
             }`}
           >
             <Image
-              src={image || "/placeholder.svg"}
+              src={optimizeCloudinaryUrl(image) || "/placeholder.svg"}
               alt={`${productName} view ${index + 1}`}
               fill
               sizes="80px"
@@ -48,7 +49,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
             className="absolute inset-0"
           >
             <Image
-              src={images[activeIndex] || "/placeholder.svg"}
+              src={optimizeCloudinaryUrl(images[activeIndex]) || "/placeholder.svg"}
               alt={productName}
               fill
               sizes="(max-width: 768px) 100vw, 50vw"

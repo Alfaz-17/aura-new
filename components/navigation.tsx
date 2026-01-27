@@ -4,10 +4,11 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
-import { MessageCircle, Menu, X, Search, Flower2, Trees, Sprout, Leaf, Sparkles } from "lucide-react"
+import { Search, ShoppingBag, User, X, Menu, ChevronDown, ChevronRight, ArrowRight, MessageCircle, Flower2, Sparkles, Trees, Sprout, Leaf } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
 import { useCategories } from "@/hooks/use-categories"
+import { optimizeCloudinaryUrl } from "@/lib/cloudinary"
 
 // ...
 
@@ -114,7 +115,7 @@ export function Navigation() {
                         >
                           {cat.image ? (
                             <div className="relative h-6 w-6 rounded-sm overflow-hidden border border-white/10 group-hover:border-[#C9A24D] transition-colors">
-                              <Image src={cat.image} alt="" fill className="object-cover" />
+                              <Image src={optimizeCloudinaryUrl(cat.image)} alt="" fill className="object-cover" />
                             </div>
                           ) : (
                             <Icon className="h-4 w-4 text-white/40 group-hover:text-[#C9A24D] transition-colors" strokeWidth={1.5} />
@@ -264,7 +265,7 @@ export function Navigation() {
                     >
                       {cat.image ? (
                         <div className="relative h-6 w-6 rounded-sm overflow-hidden border border-white/10 group-hover:border-[#C9A24D] transition-colors">
-                          <Image src={cat.image} alt="" fill className="object-cover" />
+                          <Image src={optimizeCloudinaryUrl(cat.image)} alt="" fill className="object-cover" />
                         </div>
                       ) : (
                         <Icon className="h-4 w-4 text-white/40" strokeWidth={1.5} />

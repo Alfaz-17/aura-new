@@ -4,6 +4,7 @@ import { motion } from "framer-motion"
 import Link from "next/link"
 import Image from "next/image"
 import { ArrowRight, Flower2, Trees, Sprout, Leaf, Sparkles } from "lucide-react"
+import { optimizeCloudinaryUrl } from "@/lib/cloudinary"
 
 // Categories matching the database schema
 const categories = [
@@ -88,7 +89,7 @@ export function ArchiveSection() {
               >
                 <div className="aspect-[16/9] lg:aspect-[16/10] relative">
                   <Image
-                    src={category.image}
+                    src={optimizeCloudinaryUrl(category.image)}
                     alt={category.label}
                     fill
                     sizes="(max-width: 1024px) 100vw, 50vw"
@@ -137,7 +138,7 @@ export function ArchiveSection() {
               >
                 <div className="aspect-[4/5] relative">
                   <Image
-                    src={category.image}
+                    src={optimizeCloudinaryUrl(category.image)}
                     alt={category.label}
                     fill
                     sizes="(max-width: 768px) 100vw, 33vw"

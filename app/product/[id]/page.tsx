@@ -5,6 +5,7 @@ import { notFound } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
 import { motion } from "framer-motion"
+import { optimizeCloudinaryUrl } from "@/lib/cloudinary"
 import { Navigation } from "@/components/navigation"
 import { PremiumFooter } from "@/components/premium-footer"
 import { ChevronRight, MessageCircle, ArrowLeft } from "lucide-react"
@@ -82,7 +83,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
           >
             <div className="aspect-[4/5] relative overflow-hidden bg-white">
               <Image
-                src={product.images?.[0] || "/placeholder-image.jpg"}
+                src={optimizeCloudinaryUrl(product.images?.[0]) || "/placeholder-image.jpg"}
                 alt={product.title}
                 fill
                 sizes="(max-width: 1024px) 100vw, 50vw"

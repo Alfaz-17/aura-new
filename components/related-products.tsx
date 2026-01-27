@@ -3,6 +3,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { motion } from "framer-motion"
+import { optimizeCloudinaryUrl } from "@/lib/cloudinary"
 import type { Product } from "@/lib/products"
 
 interface RelatedProductsProps {
@@ -27,7 +28,7 @@ export function RelatedProducts({ products }: RelatedProductsProps) {
               <Link href={`/product/${product.id}`} className="group block">
                 <div className="relative aspect-[3/4] overflow-hidden bg-muted mb-4">
                   <Image
-                    src={product.image || "/placeholder.svg"}
+                    src={optimizeCloudinaryUrl(product.image) || "/placeholder.svg"}
                     alt={product.name}
                     fill
                     sizes="(max-width: 768px) 50vw, 25vw"

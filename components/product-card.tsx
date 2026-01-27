@@ -4,6 +4,7 @@ import { useState } from "react"
 import Image from "next/image"
 import { motion } from "framer-motion"
 import Link from "next/link"
+import { optimizeCloudinaryUrl } from "@/lib/cloudinary"
 
 interface ProductCardProps {
   id: string
@@ -34,7 +35,7 @@ export function ProductCard({ id, name, price, image, hoverImage, category, inde
         <div className="relative aspect-[3/4] overflow-hidden bg-muted mb-4">
           {/* Primary image */}
           <Image
-            src={image || "/placeholder.svg"}
+            src={optimizeCloudinaryUrl(image) || "/placeholder.svg"}
             alt={name}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
@@ -45,7 +46,7 @@ export function ProductCard({ id, name, price, image, hoverImage, category, inde
           />
           {/* Secondary hover image */}
           <Image
-            src={hoverImage || "/placeholder.svg"}
+            src={optimizeCloudinaryUrl(hoverImage) || "/placeholder.svg"}
             alt={`${name} alternate view`}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"

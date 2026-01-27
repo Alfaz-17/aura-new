@@ -2,7 +2,8 @@
 
 import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
-import { X, Minus, Plus } from "lucide-react"
+import { X, Plus, Minus, ShoppingBag } from "lucide-react"
+import { optimizeCloudinaryUrl } from "@/lib/cloudinary"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
@@ -80,7 +81,7 @@ export function MiniCart({ isOpen, onClose }: MiniCartProps) {
                   >
                     <div className="w-24 h-30 bg-muted flex-shrink-0 relative">
                       <Image
-                        src={item.image || "/placeholder.svg"}
+                        src={optimizeCloudinaryUrl(item.image) || "/placeholder.svg"}
                         alt={item.name}
                         fill
                         sizes="96px"

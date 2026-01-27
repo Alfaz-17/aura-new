@@ -3,7 +3,8 @@
 import Link from "next/link"
 import Image from "next/image"
 import { motion, useReducedMotion } from "framer-motion"
-import { ArrowRight } from "lucide-react"
+import { Search, ArrowRight, Play } from "lucide-react"
+import { optimizeCloudinaryUrl } from "@/lib/cloudinary"
 
 export function HeroSection() {
     const shouldReduceMotion = useReducedMotion();
@@ -13,7 +14,7 @@ export function HeroSection() {
       {/* Background Image */}
       <div className="absolute inset-0">
         <Image
-          src="/aura-hero-wide.png"
+          src={optimizeCloudinaryUrl("/aura-hero-wide.png")}
           alt="Aura – House of Flowers storefront with premium botanical displays"
           fill
           priority

@@ -2,6 +2,7 @@
 
 import Image from "next/image"
 import { motion, useScroll, useTransform } from "framer-motion"
+import { optimizeCloudinaryUrl } from "@/lib/cloudinary"
 import { useRef } from "react"
 
 export function HeritageSection() {
@@ -18,7 +19,7 @@ export function HeritageSection() {
       {/* Parallax background - converted to Next.js Image with lazy loading */}
       <motion.div style={{ y }} className="absolute inset-0 -top-20 -bottom-20">
         <Image
-          src="/luxury-interior-with-artificial-floral-installatio.jpg"
+          src={optimizeCloudinaryUrl("/heritage-bg.jpg")}
           alt="Bespoke floral installation by Aura"
           fill
           sizes="100vw"
