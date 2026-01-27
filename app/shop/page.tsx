@@ -7,6 +7,10 @@ import Link from "next/link"
 import Image from "next/image"
 import { Navigation } from "@/components/navigation"
 import { PremiumFooter } from "@/components/premium-footer"
+<<<<<<< HEAD
+=======
+import { CategoryTabs } from "@/components/category-tabs"
+>>>>>>> 666998437c0c4430679dbea4368bb188913d1fbc
 import { ArrowRight } from "lucide-react"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { ShopToolbar } from "@/components/shop/shop-toolbar"
@@ -19,6 +23,12 @@ function ShopContent() {
   
   const categoryParam = searchParams.get("category")
   const searchQuery = searchParams.get("search")
+<<<<<<< HEAD
+=======
+  const minPrice = searchParams.get("minPrice")
+  const maxPrice = searchParams.get("maxPrice")
+  const sort = searchParams.get("sort")
+>>>>>>> 666998437c0c4430679dbea4368bb188913d1fbc
   
   const [activeCategory, setActiveCategory] = useState(categoryParam || "All")
   const [products, setProducts] = useState<any[]>([])
@@ -43,6 +53,12 @@ function ShopContent() {
         }
         
         if (searchQuery) params.append("search", searchQuery)
+<<<<<<< HEAD
+=======
+        if (minPrice) params.append("minPrice", minPrice)
+        if (maxPrice) params.append("maxPrice", maxPrice)
+        if (sort) params.append("sort", sort)
+>>>>>>> 666998437c0c4430679dbea4368bb188913d1fbc
         
         const queryString = params.toString()
         const url = `/api/items${queryString ? `?${queryString}` : ""}`
@@ -60,13 +76,29 @@ function ShopContent() {
     }
 
     fetchProducts()
+<<<<<<< HEAD
   }, [activeCategory, searchQuery])
+=======
+  }, [activeCategory, searchQuery, minPrice, maxPrice, sort])
+>>>>>>> 666998437c0c4430679dbea4368bb188913d1fbc
 
   // ... handleCategoryChange remains similar but might need to preserve other params if desired, 
   // currently user request implies "proper filter", usually changing category resets filters but maybe not search?
   // Let's keep it simple: Changing category pushes to /shop?category=X, effectively resetting others.
   // This is standard behavior for a main navigation change.
 
+<<<<<<< HEAD
+=======
+  const handleCategoryChange = (category: string) => {
+    setActiveCategory(category)
+    if (category === "All") {
+      router.push("/shop")
+    } else {
+      router.push(`/shop?category=${category}`)
+    }
+  }
+
+>>>>>>> 666998437c0c4430679dbea4368bb188913d1fbc
   return (
     <>
       {/* Hero Banner */}
@@ -94,6 +126,15 @@ function ShopContent() {
         </motion.div>
       </section>
 
+<<<<<<< HEAD
+=======
+      {/* Category Tabs */}
+      <CategoryTabs 
+        activeCategory={activeCategory} 
+        onCategoryChange={handleCategoryChange} 
+      />
+      
+>>>>>>> 666998437c0c4430679dbea4368bb188913d1fbc
       {/* Shop Toolbar */}
       <ShopToolbar />
 
@@ -119,7 +160,11 @@ function ShopContent() {
           ) : (
             <AnimatePresence mode="wait">
               <motion.div
+<<<<<<< HEAD
                 key={`${searchQuery}`}
+=======
+                key={`${activeCategory}-${searchQuery}-${minPrice}-${maxPrice}-${sort}`}
+>>>>>>> 666998437c0c4430679dbea4368bb188913d1fbc
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
@@ -179,6 +224,10 @@ function ShopContent() {
                         <button 
                           onClick={() => {
                              router.push("/shop")
+<<<<<<< HEAD
+=======
+                             // Also reset activeCategory locally if needed, but router push handles it via effect
+>>>>>>> 666998437c0c4430679dbea4368bb188913d1fbc
                           }}
                           className="bg-[#0E2A47] text-white px-8 py-3 text-xs tracking-widest uppercase hover:bg-[#0E2A47]/90 transition-colors"
                         >

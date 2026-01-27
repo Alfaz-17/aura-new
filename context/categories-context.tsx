@@ -42,8 +42,12 @@ export function CategoriesProvider({ children }: { children: React.ReactNode }) 
           value: cat.slug || cat.name.toLowerCase().replace(/\s+/g, "-"),
           icon: Flower2 // Default icon
         }))
+<<<<<<< HEAD
         const filtered = mapped.filter((cat: any) => cat.label.toLowerCase() !== "new arrivals")
         setCategories(filtered)
+=======
+        setCategories(mapped)
+>>>>>>> 666998437c0c4430679dbea4368bb188913d1fbc
       }
     } catch (error) {
       console.error("Failed to fetch categories", error)
