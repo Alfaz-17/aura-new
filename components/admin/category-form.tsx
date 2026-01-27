@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Save, Upload } from "lucide-react"
 import { ImageCropperModal } from "./image-cropper-modal"
+import { optimizeCloudinaryUrl } from "@/lib/cloudinary"
 
 interface CategoryFormProps {
   initialData?: {
@@ -37,7 +38,7 @@ export function CategoryForm({ initialData }: CategoryFormProps) {
 
   const handleAddImage = () => {
     if (imageUrl.trim()) {
-      setFormData({ ...formData, image: imageUrl.trim() })
+      setFormData({ ...formData, image: optimizeCloudinaryUrl(imageUrl.trim()) })
       setImageUrl("")
     }
   }
@@ -263,7 +264,8 @@ export function CategoryForm({ initialData }: CategoryFormProps) {
                 throw new Error(errorData.error?.message || "Upload failed")
               }
               const data = await res.json()
-              setFormData(prev => ({ ...prev, image: data.secure_url }))
+              const optimized = optimizeCloudinaryUrl(data.secure_url)
+              setFormData(prev => ({ ...prev, image: optimized }))
             } catch (err: any) {
               console.error("Upload error:", err)
               setError(err.message || "Failed to upload image.")

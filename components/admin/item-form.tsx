@@ -3,9 +3,10 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Save, Upload, SlidersHorizontal } from "lucide-react"
+import { ArrowLeft, Save, Upload, SlidersHorizontal, Sparkles } from "lucide-react"
 import { useCategories } from "@/hooks/use-categories"
 import { ImageCropperModal } from "./image-cropper-modal"
+import { optimizeCloudinaryUrl } from "@/lib/cloudinary"
 
 // Loose type for category in dynamic system, or import CollectionType but treat it as string
 type CollectionType = string 
@@ -46,12 +47,54 @@ export function ItemForm({ initialData }: ItemFormProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [tempImageUrl, setTempImageUrl] = useState<string | null>(null)
   const [isCropping, setIsCropping] = useState(false)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+
+  const handleAIAnalysis = async (url: string) => {
+    setIsAnalyzing(true)
+    setError("")
+    try {
+      const res = await fetch("/api/ai/analyze-product", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        // Use optimized URL for AI (already handled in API but good to be explicit)
+        body: JSON.stringify({ imageUrl: optimizeCloudinaryUrl(url, 512, 70) })
+      })
+      
+      if (!res.ok) throw new Error("AI analysis failed")
+      
+      const data = await res.json()
+      
+      // Update form with AI suggestions
+      setFormData(prev => {
+        // Find matching category slug
+        const matchedCat = categories.find(c => 
+          c.label.toLowerCase() === data.category?.toLowerCase() || 
+          c.value === data.category?.toLowerCase().replace(/\s+/g, "-")
+        )
+
+        return {
+          ...prev,
+          title: data.title || prev.title,
+          description: data.description || prev.description,
+          category: (matchedCat?.value || prev.category) as CollectionType,
+          material: data.material || prev.material,
+          dimensions: data.dimensions || prev.dimensions
+        }
+      })
+    } catch (err: any) {
+      console.error("AI Analysis error:", err)
+      setError("AI was unable to analyze this image. Please fill details manually.")
+    } finally {
+      setIsAnalyzing(false)
+    }
+  }
 
   const handleAddImage = () => {
     if (imageUrl.trim()) {
+      const optimized = optimizeCloudinaryUrl(imageUrl.trim())
       setFormData({
         ...formData,
-        images: [...formData.images, imageUrl.trim()],
+        images: [...formData.images, optimized],
       })
       setImageUrl("")
     }
@@ -242,12 +285,26 @@ export function ItemForm({ initialData }: ItemFormProps) {
                 {formData.images.map((img, idx) => (
                   <div key={idx} className="relative group aspect-square bg-[#F7F7F5] overflow-hidden">
                     <img src={img} alt="" className="w-full h-full object-cover" />
+                    
+                    {/* AI Button overlay */}
+                    {idx === 0 && (
+                      <button
+                        type="button"
+                        onClick={() => handleAIAnalysis(img)}
+                        className="absolute top-1 right-1 p-1.5 bg-[#0E2A47] text-[#C9A24D] rounded shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Analyze with AI"
+                        disabled={isAnalyzing}
+                      >
+                        <Sparkles className={`h-3 w-3 ${isAnalyzing ? 'animate-pulse' : ''}`} />
+                      </button>
+                    )}
+
                     <button
                       type="button"
                       onClick={() => handleRemoveImage(idx)}
-                      className="absolute inset-0 bg-red-500/80 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                      className="absolute inset-x-0 bottom-0 bg-red-500/80 text-white py-1 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
                     >
-                      <span className="text-xs font-medium uppercase tracking-wider">Remove</span>
+                      <span className="text-[10px] font-medium uppercase tracking-wider">Remove</span>
                     </button>
                   </div>
                 ))}
@@ -350,9 +407,10 @@ export function ItemForm({ initialData }: ItemFormProps) {
               }
               
               const data = await res.json()
+              const optimized = optimizeCloudinaryUrl(data.secure_url) // Apply optimization
               setFormData(prev => ({
                 ...prev,
-                images: [...prev.images, data.secure_url]
+                images: [...prev.images, optimized]
               }))
             } catch (err: any) {
               console.error("Upload error:", err)
