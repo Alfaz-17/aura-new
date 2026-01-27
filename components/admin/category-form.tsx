@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Save, Upload } from "lucide-react"
+import { ImageCropperModal } from "./image-cropper-modal"
 
 interface CategoryFormProps {
   initialData?: {
@@ -28,6 +29,11 @@ export function CategoryForm({ initialData }: CategoryFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState("")
+
+  // Cropping States
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [tempImageUrl, setTempImageUrl] = useState<string | null>(null)
+  const [isCropping, setIsCropping] = useState(false)
 
   const handleAddImage = () => {
     if (imageUrl.trim()) {
@@ -145,47 +151,12 @@ export function CategoryForm({ initialData }: CategoryFormProps) {
             <input
               type="file"
               accept="image/*"
-              onChange={async (e) => {
+              onChange={(e) => {
                 if (e.target.files && e.target.files.length > 0) {
                   const file = e.target.files[0]
-                  setIsUploading(true)
-                  setError("")
-                  
-                  try {
-                    // 1. Get Signature
-                    const signRes = await fetch("/api/sign-cloudinary", { method: "POST" })
-                    if (!signRes.ok) throw new Error("Failed to get upload signature")
-                    const signData = await signRes.json()
-                    const { signature, timestamp, folder, api_key, cloud_name } = signData
-
-                    // 2. Upload
-                    const formData = new FormData()
-                    formData.append("file", file)
-                    formData.append("api_key", api_key)
-                    formData.append("timestamp", timestamp.toString())
-                    formData.append("signature", signature)
-                    formData.append("folder", folder)
-
-                    const url = `https://api.cloudinary.com/v1_1/${cloud_name}/image/upload`
-                    
-                    const res = await fetch(url, {
-                      method: "POST",
-                      body: formData,
-                    })
-                    
-                    if (!res.ok) {
-                      const errorData = await res.json()
-                      throw new Error(errorData.error?.message || "Upload failed")
-                    }
-                    const data = await res.json()
-                    setFormData(prev => ({ ...prev, image: data.secure_url }))
-                  } catch (err: any) {
-                    console.error("Upload error:", err)
-                    setError(err.message || "Failed to upload image.")
-                  } finally {
-                    setIsUploading(false)
-                    e.target.value = ""
-                  }
+                  setSelectedFile(file)
+                  setTempImageUrl(URL.createObjectURL(file))
+                  setIsCropping(true)
                 }
               }}
               className="hidden"
@@ -250,6 +221,60 @@ export function CategoryForm({ initialData }: CategoryFormProps) {
           </button>
         </div>
       </form>
+
+      {/* Cropper Modal */}
+      {isCropping && tempImageUrl && (
+        <ImageCropperModal
+          image={tempImageUrl}
+          aspectRatio={1} // Categories are square 1:1
+          onClose={() => {
+            setIsCropping(false)
+            setTempImageUrl(null)
+            setSelectedFile(null)
+          }}
+          onCrop={async (blob) => {
+            setIsCropping(false)
+            setIsUploading(true)
+            setError("")
+            
+            try {
+              // 1. Get Signature
+              const signRes = await fetch("/api/sign-cloudinary", { method: "POST" })
+              if (!signRes.ok) throw new Error("Failed to get upload signature")
+              const signData = await signRes.json()
+              const { signature, timestamp, folder, api_key, cloud_name } = signData
+
+              // 2. Upload
+              const uploadFormData = new FormData()
+              uploadFormData.append("file", blob, selectedFile?.name || "cropped-image.jpg")
+              uploadFormData.append("api_key", api_key)
+              uploadFormData.append("timestamp", timestamp.toString())
+              uploadFormData.append("signature", signature)
+              uploadFormData.append("folder", folder)
+
+              const url = `https://api.cloudinary.com/v1_1/${cloud_name}/image/upload`
+              const res = await fetch(url, {
+                method: "POST",
+                body: uploadFormData,
+              })
+              
+              if (!res.ok) {
+                const errorData = await res.json()
+                throw new Error(errorData.error?.message || "Upload failed")
+              }
+              const data = await res.json()
+              setFormData(prev => ({ ...prev, image: data.secure_url }))
+            } catch (err: any) {
+              console.error("Upload error:", err)
+              setError(err.message || "Failed to upload image.")
+            } finally {
+              setIsUploading(false)
+              setTempImageUrl(null)
+              setSelectedFile(null)
+            }
+          }}
+        />
+      )}
     </div>
   )
 }
