@@ -52,6 +52,7 @@ export function ItemForm({ initialData }: ItemFormProps) {
   // Track AI-populated fields
   const [aiPopulatedFields, setAiPopulatedFields] = useState<Set<string>>(new Set())
   const [showAiSuccess, setShowAiSuccess] = useState(false)
+  const [useAI, setUseAI] = useState(true) // Toggle for automatic AI analysis
 
   const handleAIAnalysis = async (url: string) => {
     setIsAnalyzing(true)
@@ -211,12 +212,28 @@ export function ItemForm({ initialData }: ItemFormProps) {
             <label className="text-[#0E2A47]/70 text-[10px] tracking-[0.2em] uppercase block">
               Product Images *
             </label>
-            {isAnalyzing && (
-              <span className="text-xs text-[#C9A24D] flex items-center gap-1.5 animate-pulse">
-                <Sparkles className="h-3.5 w-3.5" />
-                Analyzing with AI...
-              </span>
-            )}
+            <div className="flex items-center gap-3">
+              {/* AI Toggle Button */}
+              <button
+                type="button"
+                onClick={() => setUseAI(!useAI)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                  useAI 
+                    ? 'bg-[#C9A24D] text-white shadow-sm' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+                title={useAI ? 'AI analysis enabled' : 'AI analysis disabled'}
+              >
+                <Sparkles className={`h-3.5 w-3.5 ${useAI ? '' : 'opacity-50'}`} />
+                <span>{useAI ? 'AI On' : 'AI Off'}</span>
+              </button>
+              {isAnalyzing && (
+                <span className="text-xs text-[#C9A24D] flex items-center gap-1.5 animate-pulse">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Analyzing...
+                </span>
+              )}
+            </div>
           </div>
           
           {/* Image Upload Area */}
@@ -263,10 +280,12 @@ export function ItemForm({ initialData }: ItemFormProps) {
               <span className="text-xs text-[#0E2A47]/40 block">
                 SVG, PNG, JPG or GIF (max. 10MB)
               </span>
-              <span className="text-xs text-[#C9A24D] block mt-3 flex items-center justify-center gap-1">
-                <Sparkles className="h-3 w-3" />
-                AI will automatically analyze your image
-              </span>
+              {useAI && (
+                <span className="text-xs text-[#C9A24D] block mt-3 flex items-center justify-center gap-1">
+                  <Sparkles className="h-3 w-3" />
+                  AI will automatically analyze your image
+                </span>
+              )}
             </label>
           </div>
 
@@ -538,9 +557,9 @@ export function ItemForm({ initialData }: ItemFormProps) {
                 images: [...prev.images, optimized]
               }))
               
-              // 3. AUTOMATICALLY TRIGGER AI ANALYSIS on first image
-              if (formData.images.length === 0) {
-                // This is the first image, trigger AI analysis
+              // 3. AUTOMATICALLY TRIGGER AI ANALYSIS on first image (if enabled)
+              if (formData.images.length === 0 && useAI) {
+                // This is the first image and AI is enabled, trigger AI analysis
                 handleAIAnalysis(optimized)
               }
             } catch (err: any) {
