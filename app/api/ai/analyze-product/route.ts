@@ -3,6 +3,91 @@ import { GoogleGenerativeAI } from "@google/generative-ai"
 import { connectToDatabase } from "@/lib/mongodb"
 import { Category } from "@/models/Category"
 
+// Fallback models in priority order (if quota exceeded)
+const GEMINI_MODELS = [
+  "gemini-2.5-flash",        // Newest version, try first
+  "gemini-2.0-flash-lite",   // Lighter version, lower quota usage
+  "gemini-flash-latest",     // Alias to latest available
+  "gemini-2.0-flash",        // Original (likely has quota issues)
+]
+
+async function analyzeImageWithRetry(
+  genAI: GoogleGenerativeAI,
+  base64Image: string,
+  prompt: string,
+  maxRetries = 3
+) {
+  let lastError: any = null
+
+  // Try each model in sequence
+  for (const modelName of GEMINI_MODELS) {
+    console.log(`[AI] Attempting with model: ${modelName}`)
+    
+    try {
+      const model = genAI.getGenerativeModel({ model: modelName })
+      
+      const result = await model.generateContent([
+        prompt,
+        {
+          inlineData: {
+            data: base64Image,
+            mimeType: "image/jpeg"
+          }
+        }
+      ])
+
+      console.log(`[AI] ✓ Success with model: ${modelName}`)
+      return result.response.text()
+
+    } catch (error: any) {
+      lastError = error
+      
+      // Check if it's a quota error (429)
+      if (error.status === 429 || error.message?.includes("quota")) {
+        console.warn(`[AI] ✗ Quota exceeded for ${modelName}, trying next model...`)
+        continue // Try next model
+      }
+      
+      // Check if it's a rate limit with retry suggestion
+      if (error.message?.includes("retry")) {
+        const retryMatch = error.message.match(/retry in ([\d.]+)s/)
+        if (retryMatch) {
+          const waitSeconds = parseFloat(retryMatch[1])
+          console.log(`[AI] Rate limited, waiting ${waitSeconds}s before retry...`)
+          await new Promise(resolve => setTimeout(resolve, waitSeconds * 1000))
+          
+          // Retry with same model
+          try {
+            const model = genAI.getGenerativeModel({ model: modelName })
+            const result = await model.generateContent([
+              prompt,
+              {
+                inlineData: {
+                  data: base64Image,
+                  mimeType: "image/jpeg"
+                }
+              }
+            ])
+            console.log(`[AI] ✓ Success after retry with model: ${modelName}`)
+            return result.response.text()
+          } catch (retryError: any) {
+            console.warn(`[AI] ✗ Retry failed for ${modelName}:`, retryError.message)
+            lastError = retryError
+            continue
+          }
+        }
+      }
+      
+      // For other errors, throw immediately
+      console.error(`[AI] ✗ Error with ${modelName}:`, error.message)
+      throw error
+    }
+  }
+
+  // If all models failed, throw the last error
+  throw new Error(`All models failed. Last error: ${lastError?.message || "Unknown error"}`)
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { imageUrl } = await request.json()
@@ -21,9 +106,6 @@ export async function POST(request: NextRequest) {
     const categoryNames = categories.map(c => c.name).join(", ")
 
     const genAI = new GoogleGenerativeAI(apiKey)
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" })
-
-    console.log("[AI] Analyzing image with gemini-2.0-flash...")
 
     // OPTIMIZATION: Use Cloudinary transformations to reduce image size (saves tokens)
     const optimizedImageUrl = imageUrl.includes("cloudinary.com") 
@@ -48,17 +130,8 @@ export async function POST(request: NextRequest) {
     "material": suggested material
     "dimensions": realistic size (e.g. 30x20cm)`
 
-    const result = await model.generateContent([
-      prompt,
-      {
-        inlineData: {
-          data: base64Image,
-          mimeType: "image/jpeg"
-        }
-      }
-    ])
-
-    const responseText = result.response.text()
+    // Use retry logic with model fallback
+    const responseText = await analyzeImageWithRetry(genAI, base64Image, prompt)
     
     // Extract JSON from response (sometimes Gemini wraps it in markdown blocks)
     const jsonMatch = responseText.match(/\{[\s\S]*\}/)
@@ -71,6 +144,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(analysis)
   } catch (error: any) {
     console.error("AI Analysis Error:", error)
-    return NextResponse.json({ error: error.message || "AI Analysis failed" }, { status: 500 })
+    return NextResponse.json({ 
+      error: error.message || "AI Analysis failed",
+      details: error.status === 429 ? "API quota exceeded. Please check your billing or try again later." : undefined
+    }, { status: error.status || 500 })
   }
 }
