@@ -48,10 +48,15 @@ export function ItemForm({ initialData }: ItemFormProps) {
   const [tempImageUrl, setTempImageUrl] = useState<string | null>(null)
   const [isCropping, setIsCropping] = useState(false)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
+  
+  // Track AI-populated fields
+  const [aiPopulatedFields, setAiPopulatedFields] = useState<Set<string>>(new Set())
+  const [showAiSuccess, setShowAiSuccess] = useState(false)
 
   const handleAIAnalysis = async (url: string) => {
     setIsAnalyzing(true)
     setError("")
+    setShowAiSuccess(false)
     try {
       const res = await fetch("/api/ai/analyze-product", {
         method: "POST",
@@ -64,6 +69,9 @@ export function ItemForm({ initialData }: ItemFormProps) {
       
       const data = await res.json()
       
+      // Track which fields were populated by AI
+      const populatedFields = new Set<string>()
+      
       // Update form with AI suggestions
       setFormData(prev => {
         // Find matching category slug
@@ -72,15 +80,37 @@ export function ItemForm({ initialData }: ItemFormProps) {
           c.value === data.category?.toLowerCase().replace(/\s+/g, "-")
         )
 
-        return {
-          ...prev,
-          title: data.title || prev.title,
-          description: data.description || prev.description,
-          category: (matchedCat?.value || prev.category) as CollectionType,
-          material: data.material || prev.material,
-          dimensions: data.dimensions || prev.dimensions
+        const updates: any = { ...prev }
+        
+        if (data.title) {
+          updates.title = data.title
+          populatedFields.add('title')
         }
+        if (data.description) {
+          updates.description = data.description
+          populatedFields.add('description')
+        }
+        if (matchedCat) {
+          updates.category = matchedCat.value as CollectionType
+          populatedFields.add('category')
+        }
+        if (data.material) {
+          updates.material = data.material
+          populatedFields.add('material')
+        }
+        if (data.dimensions) {
+          updates.dimensions = data.dimensions
+          populatedFields.add('dimensions')
+        }
+
+        return updates
       })
+      
+      setAiPopulatedFields(populatedFields)
+      setShowAiSuccess(true)
+      
+      // Auto-hide success message after 5 seconds
+      setTimeout(() => setShowAiSuccess(false), 5000)
     } catch (err: any) {
       console.error("AI Analysis error:", err)
       setError("AI was unable to analyze this image. Please fill details manually.")
@@ -167,16 +197,154 @@ export function ItemForm({ initialData }: ItemFormProps) {
         </div>
       )}
 
+      {showAiSuccess && (
+        <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 px-4 py-3 mb-6 text-sm flex items-center gap-2">
+          <Sparkles className="h-4 w-4" />
+          <span>AI analysis complete! Form fields have been auto-populated.</span>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="bg-white border border-[#0E2A47]/10 p-6 space-y-6">
+        {/* IMAGE UPLOAD SECTION - NOW AT TOP */}
+        <div className="space-y-4 pb-6 border-b border-[#0E2A47]/10">
+          <div className="flex items-center justify-between">
+            <label className="text-[#0E2A47]/70 text-[10px] tracking-[0.2em] uppercase block">
+              Product Images *
+            </label>
+            {isAnalyzing && (
+              <span className="text-xs text-[#C9A24D] flex items-center gap-1.5 animate-pulse">
+                <Sparkles className="h-3.5 w-3.5" />
+                Analyzing with AI...
+              </span>
+            )}
+          </div>
+          
+          {/* Image Upload Area */}
+          <div className={`border-2 border-dashed border-[#0E2A47]/20 p-8 text-center transition-all relative ${isUploading ? 'bg-gray-50' : 'hover:bg-[#F7F7F5] hover:border-[#C9A24D]/30'}`}>
+            {isUploading && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/90 z-10">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#C9A24D] mb-3"></div>
+                <span className="text-sm font-medium text-[#0E2A47] animate-pulse">Uploading image...</span>
+              </div>
+            )}
+            
+            {isAnalyzing && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/90 z-10">
+                <Sparkles className="h-10 w-10 text-[#C9A24D] mb-3 animate-pulse" />
+                <span className="text-sm font-medium text-[#0E2A47]">Analyzing with AI...</span>
+                <span className="text-xs text-[#0E2A47]/60 mt-1">This may take a few seconds</span>
+              </div>
+            )}
+            
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={(e) => {
+                if (e.target.files && e.target.files.length > 0) {
+                  const file = e.target.files[0]
+                  setSelectedFile(file)
+                  setTempImageUrl(URL.createObjectURL(file))
+                  setIsCropping(true)
+                }
+              }}
+              className="hidden"
+              id="image-upload"
+              disabled={isUploading || isAnalyzing}
+            />
+            <label htmlFor="image-upload" className={`cursor-pointer block ${isUploading || isAnalyzing ? 'opacity-50 pointer-events-none' : ''}`}>
+              <Upload className="h-12 w-12 mx-auto text-[#0E2A47]/30 mb-3" />
+              <span className="text-base font-medium text-[#0E2A47] block mb-2">
+                Click to upload product image
+              </span>
+              <span className="text-sm text-[#0E2A47]/60 block mb-1">
+                or drag and drop
+              </span>
+              <span className="text-xs text-[#0E2A47]/40 block">
+                SVG, PNG, JPG or GIF (max. 10MB)
+              </span>
+              <span className="text-xs text-[#C9A24D] block mt-3 flex items-center justify-center gap-1">
+                <Sparkles className="h-3 w-3" />
+                AI will automatically analyze your image
+              </span>
+            </label>
+          </div>
+
+          {/* URL Fallback */}
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              placeholder="Or paste image URL..."
+              className="flex-1 border border-[#0E2A47]/10 px-4 py-2 text-sm text-[#0E2A47] focus:outline-none focus:border-[#C9A24D]/50"
+              disabled={isUploading || isAnalyzing}
+            />
+            <button
+              type="button"
+              onClick={handleAddImage}
+              className="px-4 py-2 bg-[#0E2A47]/5 text-[#0E2A47] text-xs uppercase tracking-wider hover:bg-[#0E2A47]/10 transition-colors disabled:opacity-50"
+              disabled={!imageUrl || isUploading || isAnalyzing}
+            >
+              Add URL
+            </button>
+          </div>
+
+          {/* Image Preview Grid */}
+          {formData.images.length > 0 && (
+            <div className="grid grid-cols-4 sm:grid-cols-5 gap-4 mt-4">
+              {formData.images.map((img, idx) => (
+                <div key={idx} className="relative group aspect-square bg-[#F7F7F5] overflow-hidden border border-[#0E2A47]/10">
+                  <img src={img} alt="" className="w-full h-full object-cover" />
+                  
+                  {/* AI Re-analyze Button on first image */}
+                  {idx === 0 && (
+                    <button
+                      type="button"
+                      onClick={() => handleAIAnalysis(img)}
+                      className="absolute top-1 right-1 p-1.5 bg-[#C9A24D] text-white rounded shadow-sm opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
+                      title="Re-analyze with AI"
+                      disabled={isAnalyzing}
+                    >
+                      <Sparkles className={`h-3 w-3 ${isAnalyzing ? 'animate-pulse' : ''}`} />
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveImage(idx)}
+                    className="absolute inset-x-0 bottom-0 bg-red-500/80 text-white py-1 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                  >
+                    <span className="text-[10px] font-medium uppercase tracking-wider">Remove</span>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Title */}
         <div>
-          <label className="text-[#0E2A47]/70 text-[10px] tracking-[0.2em] uppercase block mb-2">
+          <label className="text-[#0E2A47]/70 text-[10px] tracking-[0.2em] uppercase block mb-2 flex items-center gap-1.5">
             Title *
+            {aiPopulatedFields.has('title') && (
+              <span className="text-[#C9A24D] flex items-center gap-0.5" title="AI suggested">
+                <Sparkles className="h-3 w-3" />
+                <span className="text-[9px]">AI</span>
+              </span>
+            )}
           </label>
           <input
             type="text"
             value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            onChange={(e) => {
+              setFormData({ ...formData, title: e.target.value })
+              setAiPopulatedFields(prev => {
+                const next = new Set(prev)
+                next.delete('title')
+                return next
+              })
+            }}
             className="w-full border border-[#0E2A47]/10 px-4 py-3 text-[#0E2A47] focus:outline-none focus:border-[#C9A24D]/50"
             placeholder="Enter item title"
             required
@@ -185,12 +353,25 @@ export function ItemForm({ initialData }: ItemFormProps) {
 
         {/* Description */}
         <div>
-          <label className="text-[#0E2A47]/70 text-[10px] tracking-[0.2em] uppercase block mb-2">
+          <label className="text-[#0E2A47]/70 text-[10px] tracking-[0.2em] uppercase block mb-2 flex items-center gap-1.5">
             Description *
+            {aiPopulatedFields.has('description') && (
+              <span className="text-[#C9A24D] flex items-center gap-0.5" title="AI suggested">
+                <Sparkles className="h-3 w-3" />
+                <span className="text-[9px]">AI</span>
+              </span>
+            )}
           </label>
           <textarea
             value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            onChange={(e) => {
+              setFormData({ ...formData, description: e.target.value })
+              setAiPopulatedFields(prev => {
+                const next = new Set(prev)
+                next.delete('description')
+                return next
+              })
+            }}
             rows={4}
             className="w-full border border-[#0E2A47]/10 px-4 py-3 text-[#0E2A47] focus:outline-none focus:border-[#C9A24D]/50 resize-none"
             placeholder="Enter item description"
@@ -200,12 +381,25 @@ export function ItemForm({ initialData }: ItemFormProps) {
 
         {/* Category */}
         <div>
-          <label className="text-[#0E2A47]/70 text-[10px] tracking-[0.2em] uppercase block mb-2">
+          <label className="text-[#0E2A47]/70 text-[10px] tracking-[0.2em] uppercase block mb-2 flex items-center gap-1.5">
             Category *
+            {aiPopulatedFields.has('category') && (
+              <span className="text-[#C9A24D] flex items-center gap-0.5" title="AI suggested">
+                <Sparkles className="h-3 w-3" />
+                <span className="text-[9px]">AI</span>
+              </span>
+            )}
           </label>
           <select
             value={formData.category}
-            onChange={(e) => setFormData({ ...formData, category: e.target.value as CollectionType })}
+            onChange={(e) => {
+              setFormData({ ...formData, category: e.target.value as CollectionType })
+              setAiPopulatedFields(prev => {
+                const next = new Set(prev)
+                next.delete('category')
+                return next
+              })
+            }}
             className="w-full border border-[#0E2A47]/10 px-4 py-3 text-[#0E2A47] focus:outline-none focus:border-[#C9A24D]/50 bg-white"
             required
           >
@@ -216,101 +410,6 @@ export function ItemForm({ initialData }: ItemFormProps) {
             ))}
           </select>
         </div>
-
-        {/* Images */}
-          <div className="space-y-4">
-            <label className="text-[#0E2A47]/70 text-[10px] tracking-[0.2em] uppercase block">
-              Images
-            </label>
-            
-            {/* Image Upload Area */}
-            <div className={`border-2 border-dashed border-[#0E2A47]/10 p-6 text-center transition-colors relative ${isUploading ? 'bg-gray-50' : 'hover:bg-[#F7F7F5]'}`}>
-              {isUploading && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 z-10">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0E2A47] mb-2"></div>
-                  <span className="text-xs font-medium text-[#0E2A47] animate-pulse">Uploading images...</span>
-                </div>
-              )}
-              
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={(e) => {
-                  if (e.target.files && e.target.files.length > 0) {
-                    const file = e.target.files[0]
-                    setSelectedFile(file)
-                    setTempImageUrl(URL.createObjectURL(file))
-                    setIsCropping(true)
-                  }
-                }}
-                className="hidden"
-                id="image-upload"
-                disabled={isUploading}
-              />
-              <label htmlFor="image-upload" className={`cursor-pointer block ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
-                <Upload className="h-8 w-8 mx-auto text-[#0E2A47]/30 mb-2" />
-                <span className="text-sm text-[#0E2A47]/60 block mb-1">
-                  Click to upload or drag and drop
-                </span>
-                <span className="text-xs text-[#0E2A47]/40 block">
-                  SVG, PNG, JPG or GIF (max. 10MB)
-                </span>
-              </label>
-            </div>
-
-            {/* URL Fallback */}
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                placeholder="Or paste image URL..."
-                className="flex-1 border border-[#0E2A47]/10 px-4 py-2 text-sm text-[#0E2A47] focus:outline-none focus:border-[#C9A24D]/50"
-                disabled={isUploading}
-              />
-              <button
-                type="button"
-                onClick={handleAddImage}
-                className="px-4 py-2 bg-[#0E2A47]/5 text-[#0E2A47] text-xs uppercase tracking-wider hover:bg-[#0E2A47]/10 transition-colors"
-                disabled={!imageUrl || isUploading}
-              >
-                Add URL
-              </button>
-            </div>
-
-            {/* Image Preview Grid */}
-            {formData.images.length > 0 && (
-              <div className="grid grid-cols-4 sm:grid-cols-5 gap-4 mt-4">
-                {formData.images.map((img, idx) => (
-                  <div key={idx} className="relative group aspect-square bg-[#F7F7F5] overflow-hidden">
-                    <img src={img} alt="" className="w-full h-full object-cover" />
-                    
-                    {/* AI Button overlay */}
-                    {idx === 0 && (
-                      <button
-                        type="button"
-                        onClick={() => handleAIAnalysis(img)}
-                        className="absolute top-1 right-1 p-1.5 bg-[#0E2A47] text-[#C9A24D] rounded shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                        title="Analyze with AI"
-                        disabled={isAnalyzing}
-                      >
-                        <Sparkles className={`h-3 w-3 ${isAnalyzing ? 'animate-pulse' : ''}`} />
-                      </button>
-                    )}
-
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveImage(idx)}
-                      className="absolute inset-x-0 bottom-0 bg-red-500/80 text-white py-1 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
-                    >
-                      <span className="text-[10px] font-medium uppercase tracking-wider">Remove</span>
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
 
         {/* Price, Dimensions, Material */}
         <div className="grid md:grid-cols-3 gap-4">
@@ -327,25 +426,51 @@ export function ItemForm({ initialData }: ItemFormProps) {
             />
           </div>
           <div>
-            <label className="text-[#0E2A47]/70 text-[10px] tracking-[0.2em] uppercase block mb-2">
+            <label className="text-[#0E2A47]/70 text-[10px] tracking-[0.2em] uppercase block mb-2 flex items-center gap-1.5">
               Dimensions
+              {aiPopulatedFields.has('dimensions') && (
+                <span className="text-[#C9A24D] flex items-center gap-0.5" title="AI suggested">
+                  <Sparkles className="h-3 w-3" />
+                  <span className="text-[9px]">AI</span>
+                </span>
+              )}
             </label>
             <input
               type="text"
               value={formData.dimensions}
-              onChange={(e) => setFormData({ ...formData, dimensions: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, dimensions: e.target.value })
+                setAiPopulatedFields(prev => {
+                  const next = new Set(prev)
+                  next.delete('dimensions')
+                  return next
+                })
+              }}
               className="w-full border border-[#0E2A47]/10 px-4 py-3 text-[#0E2A47] focus:outline-none focus:border-[#C9A24D]/50"
               placeholder="e.g., 30cm x 20cm"
             />
           </div>
           <div>
-            <label className="text-[#0E2A47]/70 text-[10px] tracking-[0.2em] uppercase block mb-2">
+            <label className="text-[#0E2A47]/70 text-[10px] tracking-[0.2em] uppercase block mb-2 flex items-center gap-1.5">
               Material
+              {aiPopulatedFields.has('material') && (
+                <span className="text-[#C9A24D] flex items-center gap-0.5" title="AI suggested">
+                  <Sparkles className="h-3 w-3" />
+                  <span className="text-[9px]">AI</span>
+                </span>
+              )}
             </label>
             <input
               type="text"
               value={formData.material}
-              onChange={(e) => setFormData({ ...formData, material: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, material: e.target.value })
+                setAiPopulatedFields(prev => {
+                  const next = new Set(prev)
+                  next.delete('material')
+                  return next
+                })
+              }}
               className="w-full border border-[#0E2A47]/10 px-4 py-3 text-[#0E2A47] focus:outline-none focus:border-[#C9A24D]/50"
               placeholder="e.g., Silk, Ceramic"
             />
@@ -412,6 +537,12 @@ export function ItemForm({ initialData }: ItemFormProps) {
                 ...prev,
                 images: [...prev.images, optimized]
               }))
+              
+              // 3. AUTOMATICALLY TRIGGER AI ANALYSIS on first image
+              if (formData.images.length === 0) {
+                // This is the first image, trigger AI analysis
+                handleAIAnalysis(optimized)
+              }
             } catch (err: any) {
               console.error("Upload error:", err)
               setError(err.message || "Failed to upload image.")
