@@ -103,7 +103,10 @@ export async function POST(request: NextRequest) {
 
     await connectToDatabase()
     const categories = await Category.find({ isActive: true }).select("name slug")
-    const categoryNames = categories.map(c => c.name).join(", ")
+    
+    // Create a mapping of both names and slugs for better AI matching
+    const categoryList = categories.map(c => `${c.slug} (${c.name})`).join(", ")
+    const categorySlugs = categories.map(c => c.slug)
 
     const genAI = new GoogleGenerativeAI(apiKey)
 
@@ -113,6 +116,7 @@ export async function POST(request: NextRequest) {
       : imageUrl
 
     console.log(`[AI] Fetching optimized image: ${optimizedImageUrl}`)
+    console.log(`[AI] Available categories: ${categorySlugs.join(", ")}`)
 
     // Fetch image data
     const imageResponse = await fetch(optimizedImageUrl)
@@ -122,13 +126,24 @@ export async function POST(request: NextRequest) {
     const base64Image = Buffer.from(imageData).toString("base64")
     console.log(`[AI] Optimized image size: ${imageData.byteLength} bytes`)
 
-    const prompt = `Analyze this luxury floral product image.
-    Provide JSON:
-    "title": elegant title
-    "description": 1-2 sentences, premium tone
-    "category": exactly one from [${categoryNames}]
-    "material": suggested material
-    "dimensions": realistic size (e.g. 30x20cm)`
+    const prompt = `Analyze this luxury floral product image and provide details in JSON format.
+
+IMPORTANT: For the "category" field, you MUST return the exact slug (lowercase with hyphens) from this list:
+${categorySlugs.join(", ")}
+
+Available categories with descriptions:
+${categoryList}
+
+Return JSON with these exact fields:
+{
+  "title": "elegant product title",
+  "description": "1-2 sentences with premium tone",
+  "category": "exact-category-slug-from-list-above",
+  "material": "suggested material (e.g., Silk, Polyester, Ceramic)",
+  "dimensions": "realistic size estimate (e.g., 30x20cm or 12x8 inches)"
+}
+
+Remember: The category value must be one of: ${categorySlugs.join(", ")}`
 
     // Use retry logic with model fallback
     const responseText = await analyzeImageWithRetry(genAI, base64Image, prompt)
@@ -140,6 +155,24 @@ export async function POST(request: NextRequest) {
     }
     
     const analysis = JSON.parse(jsonMatch[0])
+    
+    // Validate and correct category if needed
+    if (analysis.category) {
+      const validCategory = categorySlugs.find(slug => 
+        slug === analysis.category || 
+        slug.toLowerCase() === analysis.category.toLowerCase()
+      )
+      
+      if (validCategory) {
+        analysis.category = validCategory // Ensure exact match
+        console.log(`[AI] ✓ Valid category: ${validCategory}`)
+      } else {
+        console.warn(`[AI] ✗ Invalid category returned: "${analysis.category}"`)
+        console.warn(`[AI] Valid options are: ${categorySlugs.join(", ")}`)
+        // Don't set a default - let the frontend handle it
+        analysis.category = null
+      }
+    }
 
     return NextResponse.json(analysis)
   } catch (error: any) {

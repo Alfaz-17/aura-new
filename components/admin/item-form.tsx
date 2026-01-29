@@ -75,13 +75,37 @@ export function ItemForm({ initialData }: ItemFormProps) {
       
       // Update form with AI suggestions
       setFormData(prev => {
-        // Find matching category slug
-        const matchedCat = categories.find(c => 
-          c.label.toLowerCase() === data.category?.toLowerCase() || 
-          c.value === data.category?.toLowerCase().replace(/\s+/g, "-")
-        )
-
         const updates: any = { ...prev }
+        
+        // Enhanced category matching with multiple strategies
+        if (data.category) {
+          console.log('[AI] Received category from AI:', data.category)
+          console.log('[AI] Available categories:', categories.map(c => `${c.value} (${c.label})`))
+          
+          // Try multiple matching strategies
+          let matchedCat = 
+            // 1. Exact slug match (preferred)
+            categories.find(c => c.value === data.category) ||
+            // 2. Exact label match
+            categories.find(c => c.label === data.category) ||
+            // 3. Case-insensitive slug match
+            categories.find(c => c.value.toLowerCase() === data.category.toLowerCase()) ||
+            // 4. Case-insensitive label match
+            categories.find(c => c.label.toLowerCase() === data.category.toLowerCase()) ||
+            // 5. Slug with spaces converted to hyphens
+            categories.find(c => c.value === data.category.toLowerCase().replace(/\s+/g, "-")) ||
+            // 6. Partial match in label
+            categories.find(c => c.label.toLowerCase().includes(data.category.toLowerCase()))
+          
+          if (matchedCat) {
+            updates.category = matchedCat.value as CollectionType
+            populatedFields.add('category')
+            console.log('[AI] ✓ Matched category:', matchedCat.value, `(${matchedCat.label})`)
+          } else {
+            console.warn('[AI] ✗ No category match found for:', data.category)
+            console.warn('[AI] Keeping default category:', prev.category)
+          }
+        }
         
         if (data.title) {
           updates.title = data.title
@@ -90,10 +114,6 @@ export function ItemForm({ initialData }: ItemFormProps) {
         if (data.description) {
           updates.description = data.description
           populatedFields.add('description')
-        }
-        if (matchedCat) {
-          updates.category = matchedCat.value as CollectionType
-          populatedFields.add('category')
         }
         if (data.material) {
           updates.material = data.material
