@@ -645,52 +645,80 @@ export function ItemForm({ initialData }: ItemFormProps) {
                 try {
                   console.log("[BG] Starting client-side removal (FREE)...")
                   
-                  // Use FREE client-side background removal
-                  const processedBlob = await removeBackgroundClient(blob)
+                  // Try FREE client-side background removal first
+                  try {
+                    const processedBlob = await removeBackgroundClient(blob)
                   
-                  // Upload processed image to Cloudinary
-                  const signRes2 = await fetch("/api/sign-cloudinary", { method: "POST" })
-                  if (signRes2.ok) {
-                    const signData2 = await signRes2.json()
-                    
-                    const bgFormData = new FormData()
-                    bgFormData.append("file", processedBlob, "processed_bg.png")
-                    bgFormData.append("api_key", signData2.api_key)
-                    bgFormData.append("timestamp", signData2.timestamp.toString())
-                    bgFormData.append("signature", signData2.signature)
-                    bgFormData.append("folder", signData2.folder)
+                    // Upload processed image to Cloudinary
+                    const signRes2 = await fetch("/api/sign-cloudinary", { method: "POST" })
+                    if (signRes2.ok) {
+                      const signData2 = await signRes2.json()
+                      
+                      const bgFormData = new FormData()
+                      bgFormData.append("file", processedBlob, "processed_bg.png")
+                      bgFormData.append("api_key", signData2.api_key)
+                      bgFormData.append("timestamp", signData2.timestamp.toString())
+                      bgFormData.append("signature", signData2.signature)
+                      bgFormData.append("folder", signData2.folder)
 
-                    const bgUploadUrl = `https://api.cloudinary.com/v1_1/${signData2.cloud_name}/image/upload`
-                    const bgUploadRes = await fetch(bgUploadUrl, {
+                      const bgUploadUrl = `https://api.cloudinary.com/v1_1/${signData2.cloud_name}/image/upload`
+                      const bgUploadRes = await fetch(bgUploadUrl, {
+                        method: "POST",
+                        body: bgFormData,
+                      })
+
+                      if (bgUploadRes.ok) {
+                        const bgData = await bgUploadRes.json()
+                        const baseUrl = bgData.secure_url
+                        let transformation = ""
+                        
+                        if (backgroundType === 'custom') {
+                          const hex = backgroundColor.startsWith('#') ? backgroundColor.slice(1) : backgroundColor
+                          transformation = `b_rgb:${hex}`
+                        }
+                        
+                        if (transformation) {
+                          finalImageUrl = baseUrl.replace("/upload/", `/upload/${transformation}/`)
+                        } else {
+                          finalImageUrl = baseUrl
+                        }
+                        console.log('[BG] ✓ Processed via Client-side')
+                      }
+                    }
+                  } catch (clientErr: any) {
+                    // FALLBACK: If client-side fails (common on mobile), use Server-side API
+                    console.warn('[BG] Client-side failed, falling back to server...', clientErr.message)
+                    
+                    if (clientErr.message === "MOBILE_MEMORY_ERROR") {
+                      console.log('[BG] Device memory low, using server processing.')
+                    }
+
+                    const processRes = await fetch("/api/process-image", {
                       method: "POST",
-                      body: bgFormData,
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ 
+                        imageUrl: data.secure_url, // Use the already uploaded original image
+                        backgroundType: backgroundType === 'custom' ? 'white' : 'transparent' // Standardized for API
+                      })
                     })
 
-                    if (bgUploadRes.ok) {
-                      const bgData = await bgUploadRes.json()
+                    if (processRes.ok) {
+                      const processData = await processRes.json()
+                      finalImageUrl = processData.processedUrl
                       
-                      // Apply background style using Cloudinary transformations
-                      const baseUrl = bgData.secure_url
-                      let transformation = ""
-                      
+                      // If it was custom color, we need to apply it manually to the server result
                       if (backgroundType === 'custom') {
-                        // Cloudinary background color requires hex without #, so we slice(1)
                         const hex = backgroundColor.startsWith('#') ? backgroundColor.slice(1) : backgroundColor
-                        transformation = `b_rgb:${hex}`
+                        finalImageUrl = finalImageUrl.replace("/upload/", `/upload/b_rgb:${hex}/`)
                       }
-                      
-                      if (transformation) {
-                        finalImageUrl = baseUrl.replace("/upload/", `/upload/${transformation}/`)
-                      } else {
-                        finalImageUrl = baseUrl // Transparent
-                      }
-                      
-                      console.log('[BG] ✓ Processed image URL:', finalImageUrl)
+                      console.log('[BG] ✓ Processed via Server-side fallback')
+                    } else {
+                      throw new Error("Both client and server BG removal failed")
                     }
                   }
                 } catch (err) {
                   console.error('[BG] Error processing background:', err)
-                  // Fallback to original image if BG removal fails
+                  // Fallback to original image if everything fails
                 } finally {
                   setIsProcessingBg(false)
                 }

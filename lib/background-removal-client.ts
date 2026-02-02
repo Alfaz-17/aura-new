@@ -6,6 +6,14 @@ import { pipeline, RawImage, env } from '@huggingface/transformers';
 if (typeof window !== 'undefined') {
   env.allowLocalModels = false;
   env.allowRemoteModels = true;
+  
+  // Mobile optimization: Limit threads to avoid memory crashes on low-end devices
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  if (isMobile) {
+    // env.backends.onnx.wasm.numThreads is the correct path for v3
+    // @ts-ignore
+    if (env.backends?.onnx?.wasm) env.backends.onnx.wasm.numThreads = 1;
+  }
 }
 
 let segmenter: any = null;
@@ -13,9 +21,6 @@ let segmenter: any = null;
 /**
  * Removes the background from a given image file using client-side AI (Hugging Face Transformers.js).
  * Uses the RMBG-1.4 model which is optimized for background removal.
- * 
- * @param imageFile The image file (Blob or File) to process
- * @returns A Promise resolving to a Blob of the image with transparent background
  */
 export async function removeBackgroundClient(imageFile: File | Blob): Promise<Blob> {
   try {
@@ -25,23 +30,31 @@ export async function removeBackgroundClient(imageFile: File | Blob): Promise<Bl
     if (!segmenter) {
       console.log("[BG Client] Loading model (briaai/RMBG-1.4)...");
       segmenter = await pipeline('image-segmentation', 'briaai/RMBG-1.4', {
-        device: 'webgpu', // Try WebGPU first, will fallback to WASM
+        device: 'webgpu', 
       });
     }
 
-    // 2. Convert File/Blob to RawImage
+    // 2. Load and RESIZE image for processing (Saves memory on mobile)
     const url = URL.createObjectURL(imageFile);
-    const image = await RawImage.fromURL(url);
+    let image = await RawImage.fromURL(url);
     URL.revokeObjectURL(url);
+
+    // Resize if too large to prevent mobile crashes
+    const MAX_DIM = 1024;
+    if (image.width > MAX_DIM || image.height > MAX_DIM) {
+      console.log(`[BG Client] Resizing image from ${image.width}x${image.height} for processing...`);
+      // RawImage.resize(width, height) - simple resize
+      image = await image.resize(MAX_DIM, MAX_DIM);
+    }
 
     // 3. Process image
     console.log("[BG Client] Processing image...");
     const output = await segmenter(image);
     
-    // output is a mask (alpha channel)
+    // 4. Extract mask
     const mask = output[0].mask;
     
-    // 4. Create a canvas to apply the mask and get transparent background
+    // 5. Create final canvas
     const canvas = document.createElement('canvas');
     canvas.width = image.width;
     canvas.height = image.height;
@@ -49,23 +62,26 @@ export async function removeBackgroundClient(imageFile: File | Blob): Promise<Bl
     
     if (!ctx) throw new Error("Could not get canvas context");
 
-    // Draw original image
-    const bitmap = await createImageBitmap(imageFile);
+    // Draw original (potentially resized) image
+    const blob = await image.toBlob();
+    const bitmap = await createImageBitmap(blob);
     ctx.drawImage(bitmap, 0, 0);
 
     // Apply alpha mask
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const maskData = await mask.toCanvas().getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
+    
+    const maskCanvas = await mask.toCanvas();
+    const maskCtx = maskCanvas.getContext('2d');
+    if (!maskCtx) throw new Error("Could not get mask canvas context");
+    const maskData = maskCtx.getImageData(0, 0, canvas.width, canvas.height);
     
     for (let i = 0; i < imageData.data.length; i += 4) {
-      // Set alpha channel (index i+3) from the mask's grayscale value
-      // Mask is usually grayscale (r=g=b)
       imageData.data[i + 3] = maskData.data[i]; 
     }
     
     ctx.putImageData(imageData, 0, 0);
 
-    // 5. Convert canvas back to Blob
+    // 6. Convert to Blob
     return new Promise((resolve, reject) => {
       canvas.toBlob((blob) => {
         if (blob) {
@@ -77,10 +93,18 @@ export async function removeBackgroundClient(imageFile: File | Blob): Promise<Bl
       }, 'image/png');
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("[BG Client] Error removing background:", error);
-    // If WebGPU fails, try forcing WASM (next time)
     segmenter = null; 
-    throw new Error("Failed to remove background");
+    
+    // Check if it's a specific memory error
+    const isMemoryError = error.message?.toLowerCase().includes("memory") || 
+                         error.message?.toLowerCase().includes("range");
+
+    if (isMemoryError) {
+      throw new Error("MOBILE_MEMORY_ERROR");
+    }
+    
+    throw new Error("DEVICE_UNSUPPORTED");
   }
 }
