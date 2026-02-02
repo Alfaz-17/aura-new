@@ -1,4 +1,5 @@
-import { removeBackground } from "@imgly/background-removal"
+// Dynamically import the library only when needed (Client-side only)
+// This fixes the SSR error with onnxruntime-web
 
 // Configuration for the background removal
 const config = {
@@ -17,7 +18,10 @@ const config = {
 export async function removeBackgroundClient(imageFile: File | Blob): Promise<Blob> {
   try {
     console.log("[BG Client] Starting background removal...")
-    // @ts-ignore
+    
+    // Dynamic import to avoid SSR issues
+    const { removeBackground } = await import("@imgly/background-removal")
+    
     const blob = await removeBackground(imageFile, config)
     console.log("[BG Client] ✓ Background removed successfully")
     return blob
