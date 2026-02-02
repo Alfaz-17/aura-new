@@ -55,8 +55,8 @@ export function ItemForm({ initialData }: ItemFormProps) {
   const [showAiSuccess, setShowAiSuccess] = useState(false)
   const [useAI, setUseAI] = useState(true) // Toggle for automatic AI analysis
   const [removeBackground, setRemoveBackground] = useState(true) // Toggle for background removal
-  const [backgroundType, setBackgroundType] = useState<'gradient' | 'transparent' | 'custom'>('custom')
-  const [customColor, setCustomColor] = useState('#ffffff') // Default custom color (white)
+  const [backgroundType, setBackgroundType] = useState<'custom' | 'transparent'>('custom')
+  const [backgroundColor, setBackgroundColor] = useState('#ffffff') // Default to white
   const [isProcessingBg, setIsProcessingBg] = useState(false)
 
   const handleAIAnalysis = async (url: string) => {
@@ -284,55 +284,40 @@ export function ItemForm({ initialData }: ItemFormProps) {
             </div>
 
             {removeBackground && (
-              <div className="flex items-center gap-2 border-l border-gray-200 pl-4">
-                <span className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Style:</span>
+              <div className="flex flex-wrap items-center gap-4 border-l border-gray-200 pl-4">
                 <div className="flex gap-1">
-                  {(['custom', 'gradient', 'transparent'] as const).map((type) => (
+                  {(['custom', 'transparent'] as const).map((type) => (
                     <button
                       key={type}
                       type="button"
                       onClick={() => setBackgroundType(type)}
-                      className={`px-2 py-1 rounded text-[10px] uppercase tracking-tighter transition-all ${
+                      className={`px-3 py-1.5 rounded text-[10px] uppercase tracking-wider font-bold transition-all ${
                         backgroundType === type
-                          ? 'bg-[#0E2A47] text-white'
-                          : 'bg-white text-gray-500 border border-gray-100 hover:border-gray-300'
+                          ? 'bg-[#0E2A47] text-white shadow-sm'
+                          : 'bg-white text-gray-500 border border-gray-200 hover:border-gray-300'
                       }`}
                     >
-                      {type}
+                      {type === 'custom' ? 'Custom Color' : 'Transparent'}
                     </button>
                   ))}
                 </div>
-              </div>
-            )}
-            
-            {/* Custom Color Picker */}
-            {removeBackground && backgroundType === 'custom' && (
-              <div className="flex items-center gap-2 border-l border-gray-200 pl-4 animate-in fade-in slide-in-from-left-2">
-                <input
-                  type="color"
-                  value={customColor}
-                  onChange={(e) => setCustomColor(e.target.value)}
-                  className="h-6 w-6 rounded cursor-pointer border-0 p-0"
-                  title="Choose custom background color"
-                />
-                <div className="flex gap-1">
-                  {/* Quick Presets */}
-                  {[
-                    { color: '#ffffff', label: 'White' },
-                    { color: '#f5f5f0', label: 'Beige' },
-                    { color: '#e5e7eb', label: 'Gray' },
-                    { color: '#1a1a1a', label: 'Dark' },
-                  ].map((preset) => (
-                    <button
-                      key={preset.color}
-                      type="button"
-                      onClick={() => setCustomColor(preset.color)}
-                      className="w-5 h-5 rounded-full border border-gray-200 transition-transform hover:scale-110"
-                      style={{ backgroundColor: preset.color }}
-                      title={preset.label}
+
+                {backgroundType === 'custom' && (
+                  <div className="flex items-center gap-2 bg-white border border-gray-200 px-2 py-1 rounded-md">
+                    <input
+                      type="color"
+                      value={backgroundColor}
+                      onChange={(e) => setBackgroundColor(e.target.value)}
+                      className="w-6 h-6 p-0 border-0 cursor-pointer bg-transparent"
                     />
-                  ))}
-                </div>
+                    <input
+                      type="text"
+                      value={backgroundColor}
+                      onChange={(e) => setBackgroundColor(e.target.value)}
+                      className="text-[10px] w-16 uppercase font-mono focus:outline-none"
+                    />
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -658,56 +643,51 @@ export function ItemForm({ initialData }: ItemFormProps) {
               if (removeBackground) {
                 setIsProcessingBg(true)
                 try {
-                  console.log("[BG] Starting client-side removal...")
+                  console.log("[BG] Starting client-side removal (FREE)...")
                   
-                  // a) Remove background in browser
+                  // Use FREE client-side background removal
                   const processedBlob = await removeBackgroundClient(blob)
                   
-                  // b) Upload processed image to Cloudinary
-                  // Re-use signature (or get new one if needed, but timestamp might be old so let's get new one to be safe)
-                   const signRes2 = await fetch("/api/sign-cloudinary", { method: "POST" })
-                   if (signRes2.ok) {
-                     const signData2 = await signRes2.json()
-                     
-                     const bgFormData = new FormData()
-                     bgFormData.append("file", processedBlob, "processed_bg.png")
-                     bgFormData.append("api_key", signData2.api_key)
-                     bgFormData.append("timestamp", signData2.timestamp.toString())
-                     bgFormData.append("signature", signData2.signature)
-                     bgFormData.append("folder", signData2.folder)
+                  // Upload processed image to Cloudinary
+                  const signRes2 = await fetch("/api/sign-cloudinary", { method: "POST" })
+                  if (signRes2.ok) {
+                    const signData2 = await signRes2.json()
+                    
+                    const bgFormData = new FormData()
+                    bgFormData.append("file", processedBlob, "processed_bg.png")
+                    bgFormData.append("api_key", signData2.api_key)
+                    bgFormData.append("timestamp", signData2.timestamp.toString())
+                    bgFormData.append("signature", signData2.signature)
+                    bgFormData.append("folder", signData2.folder)
 
-                     const bgUploadRes = await fetch(url, {
-                       method: "POST",
-                       body: bgFormData,
-                     })
+                    const bgUploadUrl = `https://api.cloudinary.com/v1_1/${signData2.cloud_name}/image/upload`
+                    const bgUploadRes = await fetch(bgUploadUrl, {
+                      method: "POST",
+                      body: bgFormData,
+                    })
 
-                     if (bgUploadRes.ok) {
-                       const bgData = await bgUploadRes.json()
-                       
-                       // c) Apply background style using Cloudinary transformations
-                       // Construct URL with background transformation
-                       // e.g. /upload/b_white/v123...
-                       const baseUrl = bgData.secure_url
-                       let transformation = ""
-                       
-                       if (backgroundType === 'gradient') {
-                         transformation = "b_rgb:f5f5f0,g_north_west/e_gradient_fade:symmetric"
-                       } else if (backgroundType === 'custom') {
-                         // Convert hex #RRGGBB to Cloudinary format rgb:RRGGBB
-                         const hex = customColor.replace('#', '')
-                         transformation = `b_rgb:${hex}`
-                       }
-                       
-                       // Insert transformation into URL
-                       if (transformation) {
-                         finalImageUrl = baseUrl.replace("/upload/", `/upload/${transformation}/`)
-                       } else {
-                         finalImageUrl = baseUrl // Transparent
-                       }
-                       
-                       console.log('[BG] Processed image URL:', finalImageUrl)
-                     }
-                   }
+                    if (bgUploadRes.ok) {
+                      const bgData = await bgUploadRes.json()
+                      
+                      // Apply background style using Cloudinary transformations
+                      const baseUrl = bgData.secure_url
+                      let transformation = ""
+                      
+                      if (backgroundType === 'custom') {
+                        // Cloudinary background color requires hex without #, so we slice(1)
+                        const hex = backgroundColor.startsWith('#') ? backgroundColor.slice(1) : backgroundColor
+                        transformation = `b_rgb:${hex}`
+                      }
+                      
+                      if (transformation) {
+                        finalImageUrl = baseUrl.replace("/upload/", `/upload/${transformation}/`)
+                      } else {
+                        finalImageUrl = baseUrl // Transparent
+                      }
+                      
+                      console.log('[BG] ✓ Processed image URL:', finalImageUrl)
+                    }
+                  }
                 } catch (err) {
                   console.error('[BG] Error processing background:', err)
                   // Fallback to original image if BG removal fails
