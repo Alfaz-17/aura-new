@@ -3,6 +3,7 @@
 
 // Configuration for the background removal
 const config = {
+  publicPath: "/_next/static/chunks/app/", // Local path for assets
   progress: (key: string, current: number, total: number) => {
     // Optional: You can hook this up to a progress bar if needed
     // console.log(`Downloading ${key}: ${Math.round((current / total) * 100)}%`)
