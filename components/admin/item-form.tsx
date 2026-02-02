@@ -7,6 +7,7 @@ import { ArrowLeft, Save, Upload, SlidersHorizontal, Sparkles } from "lucide-rea
 import { useCategories } from "@/hooks/use-categories"
 import { ImageCropperModal } from "./image-cropper-modal"
 import { optimizeCloudinaryUrl } from "@/lib/cloudinary"
+import { removeBackgroundClient } from "@/lib/background-removal-client"
 
 // Loose type for category in dynamic system, or import CollectionType but treat it as string
 type CollectionType = string 
@@ -53,6 +54,10 @@ export function ItemForm({ initialData }: ItemFormProps) {
   const [aiPopulatedFields, setAiPopulatedFields] = useState<Set<string>>(new Set())
   const [showAiSuccess, setShowAiSuccess] = useState(false)
   const [useAI, setUseAI] = useState(true) // Toggle for automatic AI analysis
+  const [removeBackground, setRemoveBackground] = useState(true) // Toggle for background removal
+  const [backgroundType, setBackgroundType] = useState<'gradient' | 'transparent' | 'custom'>('custom')
+  const [customColor, setCustomColor] = useState('#ffffff') // Default custom color (white)
+  const [isProcessingBg, setIsProcessingBg] = useState(false)
 
   const handleAIAnalysis = async (url: string) => {
     setIsAnalyzing(true)
@@ -253,7 +258,83 @@ export function ItemForm({ initialData }: ItemFormProps) {
                   Analyzing...
                 </span>
               )}
+              {isProcessingBg && (
+                <span className="text-xs text-blue-500 flex items-center gap-1.5 animate-pulse">
+                  <div className="h-3.5 w-3.5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                  Removing background...
+                </span>
+              )}
             </div>
+          </div>
+
+          {/* Background Tools */}
+          <div className="flex flex-wrap gap-4 p-3 bg-gray-50/50 border border-gray-100 rounded-lg">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setRemoveBackground(!removeBackground)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                  removeBackground 
+                    ? 'bg-blue-600 text-white' 
+                    : 'bg-white text-gray-600 border border-gray-200'
+                }`}
+              >
+                {removeBackground ? 'Auto-BG On' : 'Auto-BG Off'}
+              </button>
+            </div>
+
+            {removeBackground && (
+              <div className="flex items-center gap-2 border-l border-gray-200 pl-4">
+                <span className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Style:</span>
+                <div className="flex gap-1">
+                  {(['custom', 'gradient', 'transparent'] as const).map((type) => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => setBackgroundType(type)}
+                      className={`px-2 py-1 rounded text-[10px] uppercase tracking-tighter transition-all ${
+                        backgroundType === type
+                          ? 'bg-[#0E2A47] text-white'
+                          : 'bg-white text-gray-500 border border-gray-100 hover:border-gray-300'
+                      }`}
+                    >
+                      {type}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Custom Color Picker */}
+            {removeBackground && backgroundType === 'custom' && (
+              <div className="flex items-center gap-2 border-l border-gray-200 pl-4 animate-in fade-in slide-in-from-left-2">
+                <input
+                  type="color"
+                  value={customColor}
+                  onChange={(e) => setCustomColor(e.target.value)}
+                  className="h-6 w-6 rounded cursor-pointer border-0 p-0"
+                  title="Choose custom background color"
+                />
+                <div className="flex gap-1">
+                  {/* Quick Presets */}
+                  {[
+                    { color: '#ffffff', label: 'White' },
+                    { color: '#f5f5f0', label: 'Beige' },
+                    { color: '#e5e7eb', label: 'Gray' },
+                    { color: '#1a1a1a', label: 'Dark' },
+                  ].map((preset) => (
+                    <button
+                      key={preset.color}
+                      type="button"
+                      onClick={() => setCustomColor(preset.color)}
+                      className="w-5 h-5 rounded-full border border-gray-200 transition-transform hover:scale-110"
+                      style={{ backgroundColor: preset.color }}
+                      title={preset.label}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           
           {/* Image Upload Area */}
@@ -265,11 +346,11 @@ export function ItemForm({ initialData }: ItemFormProps) {
               </div>
             )}
             
-            {isAnalyzing && (
+            {isProcessingBg && (
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/90 z-10">
-                <Sparkles className="h-10 w-10 text-[#C9A24D] mb-3 animate-pulse" />
-                <span className="text-sm font-medium text-[#0E2A47]">Analyzing with AI...</span>
-                <span className="text-xs text-[#0E2A47]/60 mt-1">This may take a few seconds</span>
+                <div className="h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                <span className="text-sm font-medium text-[#0E2A47]">Making it professional...</span>
+                <span className="text-xs text-[#0E2A47]/60 mt-1">Removing background & applying {backgroundType} style</span>
               </div>
             )}
             
@@ -570,14 +651,78 @@ export function ItemForm({ initialData }: ItemFormProps) {
                 throw new Error(errorData.error?.message || "Upload failed")
               }
               
-              const data = await res.json()
-              const optimized = optimizeCloudinaryUrl(data.secure_url) // Apply optimization
+              // 2. BACKGROUND REMOVAL (Client-Side)
+              let data = await res.json()
+              let finalImageUrl = data.secure_url
+
+              if (removeBackground) {
+                setIsProcessingBg(true)
+                try {
+                  console.log("[BG] Starting client-side removal...")
+                  
+                  // a) Remove background in browser
+                  const processedBlob = await removeBackgroundClient(blob)
+                  
+                  // b) Upload processed image to Cloudinary
+                  // Re-use signature (or get new one if needed, but timestamp might be old so let's get new one to be safe)
+                   const signRes2 = await fetch("/api/sign-cloudinary", { method: "POST" })
+                   if (signRes2.ok) {
+                     const signData2 = await signRes2.json()
+                     
+                     const bgFormData = new FormData()
+                     bgFormData.append("file", processedBlob, "processed_bg.png")
+                     bgFormData.append("api_key", signData2.api_key)
+                     bgFormData.append("timestamp", signData2.timestamp.toString())
+                     bgFormData.append("signature", signData2.signature)
+                     bgFormData.append("folder", signData2.folder)
+
+                     const bgUploadRes = await fetch(url, {
+                       method: "POST",
+                       body: bgFormData,
+                     })
+
+                     if (bgUploadRes.ok) {
+                       const bgData = await bgUploadRes.json()
+                       
+                       // c) Apply background style using Cloudinary transformations
+                       // Construct URL with background transformation
+                       // e.g. /upload/b_white/v123...
+                       const baseUrl = bgData.secure_url
+                       let transformation = ""
+                       
+                       if (backgroundType === 'gradient') {
+                         transformation = "b_rgb:f5f5f0,g_north_west/e_gradient_fade:symmetric"
+                       } else if (backgroundType === 'custom') {
+                         // Convert hex #RRGGBB to Cloudinary format rgb:RRGGBB
+                         const hex = customColor.replace('#', '')
+                         transformation = `b_rgb:${hex}`
+                       }
+                       
+                       // Insert transformation into URL
+                       if (transformation) {
+                         finalImageUrl = baseUrl.replace("/upload/", `/upload/${transformation}/`)
+                       } else {
+                         finalImageUrl = baseUrl // Transparent
+                       }
+                       
+                       console.log('[BG] Processed image URL:', finalImageUrl)
+                     }
+                   }
+                } catch (err) {
+                  console.error('[BG] Error processing background:', err)
+                  // Fallback to original image if BG removal fails
+                } finally {
+                  setIsProcessingBg(false)
+                }
+              }
+
+              const optimized = optimizeCloudinaryUrl(finalImageUrl) // Apply optimization
               setFormData(prev => ({
                 ...prev,
                 images: [...prev.images, optimized]
               }))
               
-              // 3. AUTOMATICALLY TRIGGER AI ANALYSIS on first image (if enabled)
+              // 4. AUTOMATICALLY TRIGGER AI ANALYSIS on first image (if enabled)
               if (formData.images.length === 0 && useAI) {
                 // This is the first image and AI is enabled, trigger AI analysis
                 handleAIAnalysis(optimized)
@@ -587,6 +732,7 @@ export function ItemForm({ initialData }: ItemFormProps) {
               setError(err.message || "Failed to upload image.")
             } finally {
               setIsUploading(false)
+              setIsProcessingBg(false)
               setTempImageUrl(null)
               setSelectedFile(null)
             }
